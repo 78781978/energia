@@ -1,0 +1,27 @@
+name: Paczka na hosting
+
+# Buduje gotową paczkę dist/energia-hosting.zip do wgrania na hosting Node.js (cyber_Folks).
+# Uruchom ręcznie: zakładka Actions → „Paczka na hosting” → Run workflow,
+# a po zakończeniu pobierz plik z sekcji Artifacts.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  paczka:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: bash scripts/paczka-hosting.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: energia-hosting
+          path: dist/energia-hosting.zip
+          retention-days: 30

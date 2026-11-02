@@ -1,6 +1,6 @@
 import type { Prisma } from "@prisma/client";
 import { getCurrentUser } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { ci, db } from "@/lib/db";
 import { ADMIN_VIEWS, APP_STATUSES, MEDIA, PRICE_MODELS, STATUS_LABEL, type AppStatus } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +22,7 @@ export async function GET(req: Request) {
   const st = sp.get("status");
   if (st && (APP_STATUSES as readonly string[]).includes(st)) where.status = st;
   const q = sp.get("q")?.trim();
-  if (q) where.OR = [{ company: { name: { contains: q } } }, { company: { nip: { contains: q.replace(/\D/g, "") || q } } }, { number: { contains: q } }];
+  if (q) where.OR = [{ company: { name: ci(q) } }, { company: { nip: { contains: q.replace(/\D/g, "") || q } } }, { number: { contains: q } }];
 
   const apps = await db.application.findMany({
     where,

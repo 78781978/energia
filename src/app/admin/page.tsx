@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { ci, db } from "@/lib/db";
 import { PageHead, StatusBadge, fmtDate } from "@/components/app/ui";
 import { Icon } from "@/components/Icon";
 import { ADMIN_VIEWS, APP_STATUSES, MEDIA, STATUS_LABEL } from "@/lib/constants";
@@ -25,9 +25,9 @@ export default async function AdminApplications({ searchParams }: { searchParams
   if (q) {
     const digits = normalizeDigits(q);
     where.OR = [
-      { company: { name: { contains: q } } },
+      { company: { name: ci(q) } },
       { number: { contains: q } },
-      { user: { email: { contains: q.toLowerCase() } } },
+      { user: { email: ci(q) } },
       ...(digits.length >= 3 ? [{ company: { nip: { contains: digits } } }] : []),
     ];
   }

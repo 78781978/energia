@@ -3,6 +3,7 @@
 Serwis doradczy (76 podstron usług w 10 kategoriach) oraz portal klienta i panel administratora – jedna aplikacja Next.js.
 
 > **Czego brakuje do publikacji → [BRAKI.md](./BRAKI.md)**
+> **Wdrożenie na cyber_Folks → [WDROZENIE-CYBERFOLKS.md](./WDROZENIE-CYBERFOLKS.md)**
 
 ## Co jest w środku
 
@@ -61,7 +62,7 @@ Klient demo: `klient.demo@example.com` / `KlientDemo2026`.
 ## Wdrożenie produkcyjne
 
 1. Ustaw zmienne środowiskowe z `.env.example` (zwłaszcza `SITE_URL`, `DATABASE_URL`, `STORAGE_DIR`, dane SMTP, `NOTIFY_EMAIL`).
-2. Baza: zalecany **PostgreSQL** – w `prisma/schema.prisma` zmień `provider = "sqlite"` na `"postgresql"`. W wyszukiwarce panelu dodaj wtedy `mode: "insensitive"` do filtrów `contains`, aby wyszukiwanie ignorowało wielkość liter.
+2. Baza: **PostgreSQL**. Skrypt `scripts/paczka-hosting.sh` sam przełącza schemat na PostgreSQL, generuje `init.sql` i składa gotową paczkę (`dist/energia-hosting.zip`) ze skryptami `start.js` i `setup.js`. Szczegóły: [WDROZENIE-CYBERFOLKS.md](./WDROZENIE-CYBERFOLKS.md).
 3. `STORAGE_DIR` musi wskazywać trwały katalog poza `public/`, objęty kopią zapasową (faktury i umowy klientów). Przy hostingu bez trwałego dysku podmień `src/lib/storage.ts` na zapis do S3 lub podobnej usługi.
 4. Uruchom:
 
