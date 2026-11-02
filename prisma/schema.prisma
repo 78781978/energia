@@ -1,0 +1,299 @@
+// Model danych portalu Energia Online.
+// Lokalnie: SQLite. Produkcyjnie zalecany PostgreSQL – wystarczy zmienić `provider`
+// na "postgresql" i ustawić DATABASE_URL (zob. README).
+// Wartości statusów i ról są przechowywane jako tekst – listy dozwolonych
+// wartości znajdują się w src/lib/constants.ts.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String
+  role             String    @default("CLIENT") // CLIENT | ADMIN
+  name             String?
+  phone            String?
+  marketingConsent Boolean   @default(false)
+  // źródło pozyskania (analityka): utm_source / utm_medium / utm_campaign / referrer
+  source           String?
+  isActive         Boolean   @default(true)
+  lastLoginAt      DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  companies      Company[]
+  applications   Application[]
+  documents      Document[]          @relation("uploadedBy")
+  statusChanges  StatusChange[]
+  notes          Note[]
+  auditLogs      AuditLog[]
+  messages       Message[]           @relation("recipient")
+  sentMessages   Message[]           @relation("author")
+}
+
+model Session {
+  id        String   @id // skrót SHA-256 tokenu z ciasteczka
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id // skrót SHA-256 tokenu
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Company {
+  id           String   @id @default(cuid())
+  ownerId      String
+  owner        User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name         String
+  nip          String
+  regon        String?
+  legalForm    String?
+  contactName  String?
+  contactPhone String?
+  contactEmail String?
+  hqStreet     String?
+  hqPostalCode String?
+  hqCity       String?
+  corrSameAsHq Boolean  @default(true)
+  corrStreet   String?
+  corrPostalCode String?
+  corrCity     String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  points       MeteringPoint[]
+  applications Application[]
+  documents    Document[]
+
+  @@index([nip])
+  @@index([ownerId])
+}
+
+// Punkt poboru energii (PPE) lub gazu
+model MeteringPoint {
+  id               String   @id @default(cuid())
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  medium           String   @default("PRAD") // PRAD | GAZ
+  ppeNumber        String?
+  street           String?
+  postalCode       String?
+  city             String?
+  currentSeller    String?
+  operator         String?
+  tariff           String?
+  annualUsageMWh   Float?
+  contractedPowerKw Float?
+  contractEndDate  DateTime?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  applications ApplicationPoint[]
+}
+
+model Application {
+  id            String    @id @default(cuid())
+  number        String    @unique
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId     String
+  company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  media         String    // PRAD | GAZ | PRAD_GAZ
+  years         String    // np. "2027,2028"
+  priceModel    String    // STALA | RDN | TRANSZE | OZE | INDYWIDUALNA
+  tariff        String?
+  annualUsageMWh Float?
+  clientComment String?
+  wantsCall     Boolean   @default(false)
+  status        String    @default("WNIOSEK_UTWORZONY")
+  source        String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  points        ApplicationPoint[]
+  documents     Document[]
+  statusChanges StatusChange[]
+  notes         Note[]
+  messages      Message[]
+  offers        OfferAssignment[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model ApplicationPoint {
+  applicationId String
+  application   Application   @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  pointId       String
+  point         MeteringPoint @relation(fields: [pointId], references: [id], onDelete: Cascade)
+
+  @@id([applicationId, pointId])
+}
+
+model Document {
+  id              String       @id @default(cuid())
+  kind            String       // FAKTURA | PELNOMOCNICTWO | UMOWA | UMOWA_PODPISANA | OFERTA | CENNIK | INNE
+  fileName        String
+  storedName      String       @unique
+  mimeType        String
+  size            Int
+  visibleToClient Boolean      @default(true)
+  applicationId   String?
+  application     Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  companyId       String?
+  company         Company?     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  uploadedById    String?
+  uploadedBy      User?        @relation("uploadedBy", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt       DateTime     @default(now())
+
+  offers Offer[]
+  leads  Lead[]
+
+  @@index([applicationId])
+}
+
+model StatusChange {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  fromStatus    String?
+  toStatus      String
+  comment       String?
+  changedById   String?
+  changedBy     User?       @relation(fields: [changedById], references: [id], onDelete: SetNull)
+  createdAt     DateTime    @default(now())
+}
+
+model Note {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  authorId      String?
+  author        User?       @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  body          String
+  createdAt     DateTime    @default(now())
+}
+
+// Komunikaty od administratora widoczne w panelu klienta
+model Message {
+  id            String       @id @default(cuid())
+  recipientId   String
+  recipient     User         @relation("recipient", fields: [recipientId], references: [id], onDelete: Cascade)
+  authorId      String?
+  author        User?        @relation("author", fields: [authorId], references: [id], onDelete: SetNull)
+  applicationId String?
+  application   Application? @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  body          String
+  readAt        DateTime?
+  createdAt     DateTime     @default(now())
+}
+
+// Log zmian: kto, kiedy, co zmienił
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  entityType String
+  entityId   String
+  action     String
+  changes    String?  // JSON { pole: [przed, po] }
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+}
+
+model Offer {
+  id           String    @id @default(cuid())
+  name         String
+  supplier     String
+  media        String    // PRAD | GAZ | PRAD_GAZ
+  priceModel   String
+  years        String
+  priceNetMWh  Float?
+  tradeFeeMonthly Float?
+  validUntil   DateTime?
+  description  String?
+  isActive     Boolean   @default(true)
+  documentId   String?
+  document     Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  assignments OfferAssignment[]
+}
+
+model OfferAssignment {
+  id            String      @id @default(cuid())
+  offerId       String
+  offer         Offer       @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  customPriceNetMWh Float?
+  note          String?
+  status        String      @default("PROPONOWANA") // PROPONOWANA | WYBRANA | ODRZUCONA
+  decidedAt     DateTime?
+  createdAt     DateTime    @default(now())
+
+  @@unique([offerId, applicationId])
+}
+
+// Zapytania z formularzy serwisu (kontakt, rozmowa z doradcą, analiza faktury)
+model Lead {
+  id          String    @id @default(cuid())
+  type        String    // KONTAKT | ROZMOWA | ANALIZA
+  name        String
+  company     String?
+  nip         String?
+  email       String
+  phone       String?
+  topic       String?
+  message     String?
+  pagePath    String?
+  source      String?
+  status      String    @default("NOWE") // NOWE | W_TOKU | ZAMKNIETE
+  documentId  String?
+  document    Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
+  marketingConsent Boolean @default(false)
+  createdAt   DateTime  @default(now())
+}
+
+model NewsletterSubscriber {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  source      String?
+  unsubscribeToken String @unique
+  createdAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+}
+
+// Proste zdarzenia lejka (bez danych osobowych) – miejsca porzucenia formularza
+model FunnelEvent {
+  id        String   @id @default(cuid())
+  visitorId String
+  funnel    String   // np. "wniosek"
+  step      Int
+  source    String?
+  createdAt DateTime @default(now())
+
+  @@index([funnel, step])
+}
