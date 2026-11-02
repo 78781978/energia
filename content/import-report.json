@@ -1,0 +1,177 @@
+[
+ {
+  "strona": "Prąd dla firm",
+  "slug": "prad-dla-firm-stala-cena",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Czy mogę zabezpieczyć stałą cenę prądu na kilka lat?",
+     "Czy zakup prądu przez internet jest bezpieczny?",
+     "Czy mogę kupić prąd online bez rozmowy z handlowcem?",
+     "Czy stała cena prądu oznacza stałą wysokość faktury?",
+     "Czy zmiana sprzedawcy prądu wymaga wymiany licznika?",
+     "Czy mogę zamówić prąd dla firmy, jeśli mam już umowę?",
+     "Co to jest kara za niewykorzystany wolumen energii?",
+     "Czy muszę znać numer PPE i roczne zużycie energii?",
+     "Czy mogę kupić prąd dla kilku oddziałów firmy?",
+     "Co jest lepsze dla firmy – stała cena czy SPOT?",
+     "Czy mogę jednocześnie zamówić prąd i gaz dla firmy?",
+     "Czy Energia w Biznesie pomaga obniżyć koszty dystrybucji?",
+     "Czy założenie konta w portalu jest bezpłatne?"
+    ]
+   }
+  ]
+ },
+ {
+  "strona": "Energia elektryczna dla firm",
+  "slug": "energia-gieldowa-base-peak-dla-firm",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Jak zamówić umowę BASE/PEAK przez internet?",
+     "Czy energia BASE/PEAK jest tańsza od stałej ceny prądu?",
+     "Czy można kupić energię BASE/PEAK na 2027, 2028 i 2029 rok?",
+     "Co oznacza BASE_Y-27?",
+     "Co oznacza PEAK5_Y-27?",
+     "Czy mogę kupować energię giełdową w transzach?",
+     "Czy do zakupu BASE/PEAK potrzebuję konta na TGE?",
+     "Czy BASE/PEAK to to samo co SPOT?",
+     "Czy mogę zmienić obecną umowę na zakup giełdowy?",
+     "Jakie dane są potrzebne do przygotowania oferty BASE/PEAK?",
+     "Czy zakup energii BASE/PEAK jest odpowiedni dla małych firm?",
+     "Czy cena BASE/PEAK obejmuje dystrybucję?",
+     "Czy Energia w Biznesie pomaga zarządzać zakupem energii?"
+    ]
+   }
+  ]
+ },
+ {
+  "strona": "Taryfy dynamiczne energii elektrycznej dla firm",
+  "slug": "taryfy-dynamiczne-energii-dla-firm",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Czy taryfa dynamiczna jest tańsza od stałej ceny prądu?",
+     "Czy taryfa dynamiczna oznacza ceny godzinowe?",
+     "Czy do taryfy dynamicznej potrzebny jest inteligentny licznik?",
+     "Czy taryfa dynamiczna jest dostępna dla małych firm?",
+     "Czy C11 i C12 to taryfy dynamiczne?",
+     "Co się dzieje, gdy cena prądu na giełdzie jest ujemna?",
+     "Czy można połączyć taryfę dynamiczną z fotowoltaiką?",
+     "Czy magazyn energii opłaca się przy taryfie dynamicznej?",
+     "Czy taryfa dynamiczna jest tym samym co SPOT?",
+     "Jak sprawdzić, czy taryfa dynamiczna opłaca się mojej firmie?",
+     "Czy mogę zmienić sprzedawcę energii i przejść na taryfę dynamiczną?",
+     "Czy mogę zamówić umowę online bez rozmowy z handlowcem?",
+     "Czy Energia w Biznesie oferuje pomoc po zamówieniu umowy?"
+    ]
+   }
+  ]
+ },
+ {
+  "strona": "Energia elektryczna SPOT dla firm",
+  "slug": "energia-spot-dla-firm",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Jak zamówić umowę SPOT przez internet?",
+     "Czy prąd SPOT jest tańszy niż stała cena energii?",
+     "Czy mała firma może kupować energię SPOT?",
+     "Czy do zakupu energii SPOT potrzebuję konta na TGE?",
+     "Czy SPOT i taryfa dynamiczna to to samo?",
+     "Czy energia SPOT oznacza ceny godzinowe?",
+     "Czy przy cenach ujemnych firma dostaje pieniądze za prąd?",
+     "Czy energia SPOT jest odpowiednia dla zakładów produkcyjnych?",
+     "Jak sprawdzić opłacalność zakupu energii SPOT?",
+     "Czy mogę przejść ze stałej ceny na SPOT?",
+     "Czy SPOT obejmuje opłaty dystrybucyjne?",
+     "Czy można połączyć SPOT z magazynem energii?",
+     "Czy mogę kupić energię SPOT dla kilku liczników?",
+     "Czy Energia w Biznesie pomaga po zamówieniu umowy?"
+    ]
+   }
+  ]
+ },
+ {
+  "strona": "Gaz ziemny dla firm",
+  "slug": "gaz-dla-firm-zmiana-sprzedawcy",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Ile kosztuje gaz ziemny dla firm w 2027 roku?",
+     "Czy zmiana sprzedawcy gazu jest bezpłatna?",
+     "Czy zmiana sprzedawcy gazu wymaga wymiany gazomierza?",
+     "Czy podczas zmiany sprzedawcy gaz zostanie odłączony?",
+     "Jakie dokumenty są potrzebne do zmiany sprzedawcy gazu?",
+     "Czy mogę kupić gaz dla firmy ze stałą ceną?",
+     "Czy mogę kupić gaz na kilka lat do przodu?",
+     "Czy mogę zmienić sprzedawcę gazu przed końcem umowy?",
+     "Co oznacza kara za niewykorzystany wolumen gazu?",
+     "Czy mała firma może zmienić sprzedawcę gazu?",
+     "Czy mogę zamówić gaz dla kilku oddziałów firmy?",
+     "Czy mogę kupić prąd i gaz dla firmy w jednym portalu?",
+     "Czy cena gazu obejmuje opłaty dystrybucyjne?",
+     "Czy mogę przesłać fakturę za gaz zamiast wpisywać wszystkie dane?",
+     "Czy Energia w Biznesie pomaga po podpisaniu umowy na gaz?"
+    ]
+   }
+  ]
+ },
+ {
+  "strona": "Grupy zakupowe energii elektrycznej i gazu dla firm",
+  "slug": "grupy-zakupowe-energii-i-gazu",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Gdzie znaleźć grupę zakupową prądu dla firm?",
+     "Czy grupa zakupowa zapewnia tańszy prąd?",
+     "Czy mała firma może dołączyć do grupy zakupowej?",
+     "Czy jednoosobowa działalność gospodarcza może uczestniczyć w grupie zakupowej?",
+     "Czy można kupować prąd i gaz w jednej grupie zakupowej?",
+     "Czy każda firma podpisuje własną umowę?",
+     "Czy mogę dołączyć do grupy, jeśli mam już umowę na prąd?",
+     "Czy przystąpienie do grupy zakupowej jest bezpłatne?",
+     "Czy można dołączyć do grupy zakupowej na 2027 lub 2028 rok?",
+     "Jakie dokumenty są potrzebne do grupy zakupowej?",
+     "Czy grupa zakupowa może obejmować kilka punktów poboru energii?",
+     "Czy udział w grupie zakupowej wymaga zmiany sprzedawcy?",
+     "Czy mogę zamówić umowę z grupy zakupowej online?",
+     "Czy grupy zakupowe są przeznaczone tylko dla dużych przedsiębiorstw?",
+     "Czy Energia w Biznesie oferuje opiekę po zakupie energii?"
+    ]
+   }
+  ]
+ },
+ {
+  "strona": "Przetargi na zakup energii elektrycznej i gazu dla instytucji",
+  "slug": "przetargi-na-energie-i-gaz",
+  "problemy": [
+   {
+    "type": "faq_bez_odpowiedzi",
+    "pytania": [
+     "Czy portal Energia w Biznesie zastępuje platformę przetargową?",
+     "Kto może pomóc przygotować przetarg na energię?",
+     "Jakie dane są potrzebne do przetargu na prąd?",
+     "Jak przygotować przetarg na gaz ziemny dla gminy?",
+     "Czy kilka szkół może wspólnie kupować energię elektryczną?",
+     "Czy gmina może zorganizować wspólny przetarg na prąd i gaz?",
+     "Czy przetarg na energię można przygotować na kilka lat?",
+     "Czy w przetargu na energię liczy się tylko cena?",
+     "Czy można zmienić sprzedawcę energii po przetargu?",
+     "Czy Energia w Biznesie przygotowuje analizę faktur przed przetargiem?",
+     "Czy można połączyć przetarg z optymalizacją kosztów dystrybucji?",
+     "Czy instytucja może zamówić umowę na gaz online?",
+     "Ile kosztuje obsługa przetargu na energię elektryczną?",
+     "Czy Energia w Biznesie wspiera szpitale, szkoły i urzędy?",
+     "Czy Energia 360 obejmuje opiekę po zakończeniu przetargu?"
+    ]
+   }
+  ]
+ }
+]
