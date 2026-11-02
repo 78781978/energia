@@ -9,6 +9,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   trailingSlash: true,
+  // Samodzielny serwer (server.js) – do wdrożenia na hostingu Node.js (np. cyber_Folks)
+  output: "standalone",
   poweredByHeader: false,
   images: { formats: ["image/avif", "image/webp"] },
   experimental: {

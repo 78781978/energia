@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { Prisma } from "@prisma/client";
 import { requireAdmin } from "@/lib/auth";
-import { db } from "@/lib/db";
+import { ci, db } from "@/lib/db";
 import { PageHead, StatusBadge, fmtDate } from "@/components/app/ui";
 import { normalizeDigits } from "@/lib/validators";
 
@@ -14,9 +14,9 @@ export default async function Clients({ searchParams }: { searchParams: Promise<
   const where: Prisma.UserWhereInput = { role: "CLIENT" };
   if (q)
     where.OR = [
-      { email: { contains: q.toLowerCase() } },
-      { name: { contains: q } },
-      { companies: { some: { name: { contains: q } } } },
+      { email: ci(q) },
+      { name: ci(q) },
+      { companies: { some: { name: ci(q) } } },
       ...(digits.length >= 3 ? [{ companies: { some: { nip: { contains: digits } } } }] : []),
     ];
   const users = await db.user.findMany({

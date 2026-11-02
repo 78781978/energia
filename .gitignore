@@ -10,3 +10,4 @@ prisma/*.db-journal
 storage/
 .DS_Store
 npm-debug.log*
+dist/
