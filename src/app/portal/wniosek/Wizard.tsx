@@ -13,11 +13,13 @@ import { LEGAL_FORMS, MEDIA, PRICE_MODELS, TARIFFS_GAS, TARIFFS_POWER, USAGE_RAN
 import { PRICE_OPTIONS, priceLabel, STEP_TEXT, STEP7_BENEFITS, STEP7_HTML } from "@/lib/wizard";
 import { isPlausiblePpe, isValidEmail, isValidNip, isValidPhone, isValidPostalCode, isValidRegon, passwordProblem } from "@/lib/validators";
 
-const STEPS = ["Twoja firma", "Media", "Lata zakupu", "Wariant zakupu", "Taryfa i zużycie", "Faktury", "Liczniki", "Finalizacja"];
-const STEP_ART = ["krok-1", "krok-1", "krok-2", "krok-3", "krok-4", "krok-5", "krok-6", "krok-7"].map((k) => `/img/kroki/${k}.jpg`);
+// Etapy 1–7 wg tablicy Miro; nazw etapów nie wyświetlamy (wytyczna). Rejestracja na końcu – etap 7.
+const LAST = 7;
+const STEP_NUMS = [1, 2, 3, 4, 5, 6, 7];
+const STEP_ART = ["", "krok-1", "krok-2", "krok-3", "krok-4", "krok-5", "krok-6", "krok-7"].map((k) => `/img/kroki/${k}.jpg`);
 const COMPANY_FIELDS = ["companyName", "nip", "regon", "contactName", "contactPhone", "contactEmail", "hqStreet", "hqPostalCode", "hqCity", "corrStreet", "corrPostalCode", "corrCity"];
 function fieldStep(k: string): number {
-  if (COMPANY_FIELDS.includes(k)) return 0;
+  if (COMPANY_FIELDS.includes(k)) return 7;
   const map: Record<string, number> = { media: 1, years: 2, priceModels: 3, tariff: 4, annualUsageMWh: 4, annualUsageGasMWh: 4, invoicePower: 5, invoiceGas: 5, points: 6 };
   if (k.startsWith("point_")) return 6;
   return map[k] ?? 7;
@@ -83,7 +85,7 @@ export function Wizard({
   initialMedia: Media | "";
 }) {
   const [state, action] = useActionState(submitWizard, initialFormState);
-  const [step, setStep] = useState(company.id ? 1 : 0);
+  const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [media, setMedia] = useState<Media | "">(initialMedia);
   const [years, setYears] = useState<number[]>([]);
@@ -160,17 +162,53 @@ export function Wizard({
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step]);
 
+  // Po poprawieniu wyboru komunikat błędu znika
+  const clearErr = (...keys: string[]) =>
+    setErrors((prev) => {
+      if (!keys.some((k) => prev[k])) return prev;
+      const n = { ...prev };
+      keys.forEach((k) => delete n[k]);
+      return n;
+    });
+  useEffect(() => clearErr("media"), [media]);
+  useEffect(() => clearErr("years"), [years]);
+  useEffect(() => clearErr("priceModels"), [models]);
+  useEffect(() => clearErr("password"), [pw]);
+
   // Zmiana mediów: usuń warianty niedostępne dla nowego wyboru
   useEffect(() => {
     if (media) setModels((prev) => prev.filter((m) => PRICE_OPTIONS[media].includes(m)));
   }, [media]);
 
-  const setField = (k: keyof CompanyDraft, v: string | boolean) => setC((prev) => ({ ...prev, [k]: v }));
+  const setField = (k: keyof CompanyDraft, v: string | boolean) => {
+    setC((prev) => ({ ...prev, [k]: v }));
+    // komunikat błędu znika, gdy użytkownik poprawia pole
+    setErrors((prev) => {
+      if (!prev[k]) return prev;
+      const n = { ...prev };
+      delete n[k];
+      return n;
+    });
+  };
   const setPoint = (key: string, k: keyof PointDraft, v: string) => setPoints((prev) => prev.map((p) => (p.key === key ? { ...p, [k]: v } : p)));
 
   function validate(s: number): Record<string, string> {
     const e: Record<string, string> = {};
-    if (s === 0) {
+    if (s === 1 && !media) e.media = "Wybierz media, dla których chcesz otrzymać ofertę.";
+    if (s === 2 && !years.length) e.years = "Wybierz co najmniej jeden rok.";
+    if (s === 3 && !models.length) e.priceModels = "Zaznacz co najmniej jeden wariant zakupu.";
+    if (s === 4) {
+      const bad = (v: string) => v && !(Number(v.replace(",", ".")) >= 0);
+      if (withPower && bad(usage)) e.annualUsageMWh = "Wpisz liczbę, np. 120.";
+      if (withGas && bad(usageGas)) e.annualUsageGasMWh = "Wpisz liczbę, np. 80.";
+    }
+    if (s === 6 && pointsMode === "edit") {
+      points.forEach((p, i) => {
+        if (p.ppeNumber && !isPlausiblePpe(p.ppeNumber)) e[`point_${i}_ppeNumber`] = "Numer wygląda na niepoprawny – sprawdź go na fakturze.";
+        if (p.postalCode && !isValidPostalCode(p.postalCode)) e[`point_${i}_postalCode`] = "Format: 00-000.";
+      });
+    }
+    if (s === LAST) {
       if (c.companyName.trim().length < 2) e.companyName = "Podaj nazwę firmy.";
       if (!isValidNip(c.nip)) e.nip = "Wpisz poprawny NIP (10 cyfr).";
       if (c.regon && !isValidRegon(c.regon)) e.regon = "Wpisz poprawny REGON (9 lub 14 cyfr).";
@@ -186,21 +224,7 @@ export function Wizard({
         if (!c.corrCity.trim()) e.corrCity = "Podaj miejscowość.";
       }
     }
-    if (s === 1 && !media) e.media = "Wybierz media, dla których chcesz otrzymać ofertę.";
-    if (s === 2 && !years.length) e.years = "Wybierz co najmniej jeden rok.";
-    if (s === 3 && !models.length) e.priceModels = "Zaznacz co najmniej jeden wariant zakupu.";
-    if (s === 4) {
-      const bad = (v: string) => v && !(Number(v.replace(",", ".")) >= 0);
-      if (withPower && bad(usage)) e.annualUsageMWh = "Wpisz liczbę, np. 120.";
-      if (withGas && bad(usageGas)) e.annualUsageGasMWh = "Wpisz liczbę, np. 80.";
-    }
-    if (s === 6 && pointsMode === "edit") {
-      points.forEach((p, i) => {
-        if (p.ppeNumber && !isPlausiblePpe(p.ppeNumber)) e[`point_${i}_ppeNumber`] = "Numer wygląda na niepoprawny – sprawdź go na fakturze.";
-        if (p.postalCode && !isValidPostalCode(p.postalCode)) e[`point_${i}_postalCode`] = "Format: 00-000.";
-      });
-    }
-    if (s === 7 && !loggedIn) {
+    if (s === LAST && !loggedIn) {
       const pp = passwordProblem(pw);
       if (pp) e.password = pp;
     }
@@ -214,7 +238,7 @@ export function Wizard({
       requestAnimationFrame(() => (document.querySelector('[aria-invalid="true"], .error-text') as HTMLElement | null)?.scrollIntoView({ block: "center" }));
       return;
     }
-    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+    setStep((s) => Math.min(s + 1, LAST));
   }
 
   async function readInvoices() {
@@ -331,21 +355,19 @@ export function Wizard({
   return (
     <div className="wizard" ref={topRef} style={{ scrollMarginTop: 24 }}>
       {turnstileSiteKey && !loggedIn && <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer />}
-      <ol className="progress-steps" style={{ gridTemplateColumns: `repeat(${STEPS.length}, minmax(0,1fr))` }} aria-label="Etapy zamówienia">
-        {STEPS.map((s, i) => (
-          <li key={s} data-state={i < step ? "done" : i === step ? "current" : "todo"} aria-current={i === step ? "step" : undefined}>
+      <ol className="progress-steps progress-steps--bare" style={{ gridTemplateColumns: `repeat(${LAST}, minmax(0,1fr))` }} aria-label="Etapy zamówienia">
+        {STEP_NUMS.map((i) => (
+          <li key={i} data-state={i < step ? "done" : i === step ? "current" : "todo"} aria-current={i === step ? "step" : undefined}>
             {i < step ? (
-              <button type="button" className="progress-steps__link" onClick={() => setStep(i)}>
-                {s}
-              </button>
+              <button type="button" className="progress-steps__link" onClick={() => setStep(i)} aria-label={`Wróć do etapu ${i}`} />
             ) : (
-              s
+              <span className="sr-only">Etap {i}</span>
             )}
           </li>
         ))}
       </ol>
       <p className="muted small" style={{ marginBottom: 24 }}>
-        Etap {step} z {STEPS.length - 1} · {STEPS[step]}
+        Etap {step} z {LAST}
       </p>
 
       <form
@@ -353,7 +375,15 @@ export function Wizard({
         noValidate
         className="panel"
         style={{ padding: 32 }}
-        onSubmit={() => {
+        onSubmit={(ev) => {
+          // rejestracja na końcu: sprawdź dane firmy, kontaktu i hasło przed wysłaniem
+          const e = validate(LAST);
+          setErrors(e);
+          if (Object.keys(e).length) {
+            ev.preventDefault();
+            requestAnimationFrame(() => (document.querySelector('[aria-invalid="true"], .error-text') as HTMLElement | null)?.scrollIntoView({ block: "center" }));
+            return;
+          }
           try {
             sessionStorage.removeItem(DRAFT_KEY);
           } catch {
@@ -364,7 +394,7 @@ export function Wizard({
         <div className="wizard__art" aria-hidden="true">
           <img src={STEP_ART[step]} alt="" width={1312} height={1199} />
         </div>
-        {step !== 7 && state.error && (
+        {step !== LAST && state.error && (
           <div style={{ marginBottom: 16 }}>
             <FormAlert state={state} />
           </div>
@@ -378,64 +408,6 @@ export function Wizard({
             <input type="text" name="website" tabIndex={-1} autoComplete="off" />
           </label>
         </div>
-
-        {/* Etap 0 – dane firmy */}
-        <section hidden={step !== 0} aria-labelledby="s0">
-          <h2 id="s0">Dane Twojej firmy</h2>
-          <p className="muted">
-            Jedna rejestracja – wiele ofert od sprawdzonych dostawców. Podaj dane firmy i osoby kontaktowej. Adres e-mail będzie loginem do Portalu Klienta.
-          </p>
-          <div className="form" style={{ marginTop: 16 }}>
-            <div className="form-row">
-              {F("companyName", "Nazwa firmy", { autoComplete: "organization" })}
-              {F("nip", "NIP firmy", { inputMode: "numeric", placeholder: "Wpisz 10 cyfr" })}
-            </div>
-            <div className="form-row">
-              {F("regon", "REGON", { inputMode: "numeric", opt: true })}
-              <div className="field">
-                <label htmlFor="w-legalForm">Forma działalności</label>
-                <select id="w-legalForm" className="select" name="legalForm" value={c.legalForm} onChange={(e) => setField("legalForm", e.target.value)}>
-                  <option value="">Wybierz…</option>
-                  {LEGAL_FORMS.map((f) => (
-                    <option key={f}>{f}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <h3 style={{ marginTop: 16, marginBottom: 0 }}>Osoba kontaktowa</h3>
-            <div className="form-row form-row--3">
-              {F("contactName", "Imię i nazwisko", { autoComplete: "name" })}
-              {F("contactPhone", "Telefon", { type: "tel", autoComplete: "tel" })}
-              {F("contactEmail", loggedIn ? "E-mail kontaktowy" : "E-mail (login do portalu)", { type: "email", autoComplete: "email" })}
-            </div>
-            {errors.login && (
-              <div className="alert alert--warn">
-                <Icon name="info" />
-                <p>
-                  Masz już konto? <Link href="/portal/logowanie/?next=/portal/wniosek/">Zaloguj się</Link> – wybrane opcje kreatora zostaną zachowane w tej
-                  przeglądarce.
-                </p>
-              </div>
-            )}
-            <h3 style={{ marginTop: 16, marginBottom: 0 }}>Adres siedziby</h3>
-            <div className="form-row form-row--3">
-              {F("hqStreet", "Ulica i numer", { autoComplete: "address-line1" })}
-              {F("hqPostalCode", "Kod pocztowy", { autoComplete: "postal-code", placeholder: "00-000" })}
-              {F("hqCity", "Miejscowość", { autoComplete: "address-level2" })}
-            </div>
-            <label className="check">
-              <input type="checkbox" name="corrDifferent" checked={c.corrDifferent} onChange={(e) => setField("corrDifferent", e.target.checked)} />
-              <span>Adres korespondencyjny jest inny niż adres siedziby</span>
-            </label>
-            {c.corrDifferent && (
-              <div className="form-row form-row--3">
-                {F("corrStreet", "Ulica i numer")}
-                {F("corrPostalCode", "Kod pocztowy", { placeholder: "00-000" })}
-                {F("corrCity", "Miejscowość")}
-              </div>
-            )}
-          </div>
-        </section>
 
         {/* Etap 1 – media */}
         <section hidden={step !== 1} aria-labelledby="s1">
@@ -632,16 +604,10 @@ export function Wizard({
 
         {/* Etap 7 – finalizacja */}
         <section hidden={step !== 7} aria-labelledby="s7">
-          <h2 id="s7">{loggedIn ? "Sprawdź dane i wygeneruj ofertę" : "Sprawdź dane, zarejestruj profil i wygeneruj ofertę"}</h2>
+          <h2 id="s7">{loggedIn ? "Finalizacja i dostęp do ofert" : "Finalizacja rejestracji i dostęp do ofert"}</h2>
           <p className="muted" dangerouslySetInnerHTML={{ __html: STEP7_HTML }} />
-          <dl className="dl" style={{ marginTop: 16 }}>
-            <dt>Firma</dt>
-            <dd>
-              {c.companyName || "–"} {c.nip && `(NIP ${c.nip})`}{" "}
-              <button type="button" className="link-btn" onClick={() => setStep(0)}>
-                zmień
-              </button>
-            </dd>
+          <h3 style={{ marginTop: 24, marginBottom: 8 }}>Podsumowanie wyborów</h3>
+          <dl className="dl">
             <dt>Media</dt>
             <dd>{media ? MEDIA[media] : "–"}</dd>
             <dt>Lata zakupu</dt>
@@ -669,6 +635,65 @@ export function Wizard({
             <dt>Liczniki</dt>
             <dd>{pointsMode === "edit" ? points.filter((p) => p.ppeNumber || p.street || p.meterNumber).length || "–" : "uzupełnisz później"}</dd>
           </dl>
+
+          <details className="sub-panel" style={{ marginTop: 24 }} open={!c.id || COMPANY_FIELDS.some((k) => errors[k]) || Boolean(errors.login)}>
+            <summary style={{ cursor: "pointer", fontWeight: 700, fontSize: 18 }}>
+              {loggedIn ? `Dane firmy: ${c.companyName || "uzupełnij"}${c.nip ? ` (NIP ${c.nip})` : ""}` : "Dane firmy i osoby kontaktowej"}
+            </summary>
+            <p className="muted small" style={{ margin: "8px 0 0" }}>
+              {loggedIn ? "Sprawdź, czy dane są aktualne." : "Jedna rejestracja – wiele ofert od sprawdzonych dostawców. Adres e-mail osoby kontaktowej będzie loginem do Portalu Klienta."}
+            </p>
+          <div className="form" style={{ marginTop: 16 }}>
+            <div className="form-row">
+              {F("companyName", "Nazwa firmy", { autoComplete: "organization" })}
+              {F("nip", "NIP firmy", { inputMode: "numeric", placeholder: "Wpisz 10 cyfr" })}
+            </div>
+            <div className="form-row">
+              {F("regon", "REGON", { inputMode: "numeric", opt: true })}
+              <div className="field">
+                <label htmlFor="w-legalForm">Forma działalności</label>
+                <select id="w-legalForm" className="select" name="legalForm" value={c.legalForm} onChange={(e) => setField("legalForm", e.target.value)}>
+                  <option value="">Wybierz…</option>
+                  {LEGAL_FORMS.map((f) => (
+                    <option key={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <h3 style={{ marginTop: 16, marginBottom: 0 }}>Osoba kontaktowa</h3>
+            <div className="form-row form-row--3">
+              {F("contactName", "Imię i nazwisko", { autoComplete: "name" })}
+              {F("contactPhone", "Telefon", { type: "tel", autoComplete: "tel" })}
+              {F("contactEmail", loggedIn ? "E-mail kontaktowy" : "E-mail (login do portalu)", { type: "email", autoComplete: "email" })}
+            </div>
+            {errors.login && (
+              <div className="alert alert--warn">
+                <Icon name="info" />
+                <p>
+                  Masz już konto? <Link href="/portal/logowanie/?next=/portal/wniosek/">Zaloguj się</Link> – wybrane opcje kreatora zostaną zachowane w tej
+                  przeglądarce.
+                </p>
+              </div>
+            )}
+            <h3 style={{ marginTop: 16, marginBottom: 0 }}>Adres siedziby</h3>
+            <div className="form-row form-row--3">
+              {F("hqStreet", "Ulica i numer", { autoComplete: "address-line1" })}
+              {F("hqPostalCode", "Kod pocztowy", { autoComplete: "postal-code", placeholder: "00-000" })}
+              {F("hqCity", "Miejscowość", { autoComplete: "address-level2" })}
+            </div>
+            <label className="check">
+              <input type="checkbox" name="corrDifferent" checked={c.corrDifferent} onChange={(e) => setField("corrDifferent", e.target.checked)} />
+              <span>Adres korespondencyjny jest inny niż adres siedziby</span>
+            </label>
+            {c.corrDifferent && (
+              <div className="form-row form-row--3">
+                {F("corrStreet", "Ulica i numer")}
+                {F("corrPostalCode", "Kod pocztowy", { placeholder: "00-000" })}
+                {F("corrCity", "Miejscowość")}
+              </div>
+            )}
+          </div>
+          </details>
           <div className="field" style={{ marginTop: 24 }}>
             <label htmlFor="comment">
               Uwagi dla doradcy <span className="opt">(opcjonalnie)</span>
@@ -686,7 +711,7 @@ export function Wizard({
             <div className="sub-panel" style={{ marginTop: 24 }}>
               <h3 style={{ marginTop: 0 }}>Załóż darmowe konto</h3>
               <p className="small muted" style={{ marginTop: 0 }}>
-                Login: <strong>{c.contactEmail || "adres e-mail z etapu 0"}</strong>. Po rejestracji otrzymasz:
+                Login: <strong>{c.contactEmail || "adres e-mail osoby kontaktowej (powyżej)"}</strong>. Po rejestracji otrzymasz:
               </p>
               <ul className="checklist small" style={{ marginBottom: 16 }}>
                 {STEP7_BENEFITS.map((b) => (
@@ -747,7 +772,7 @@ export function Wizard({
         </section>
 
         <div className="wizard__nav">
-          {step > 0 && !(step === 1 && c.id) ? (
+          {step > 1 ? (
             <button type="button" className="btn btn--ghost" onClick={() => setStep((s) => s - 1)}>
               <Icon name="arrowLeft" size={18} /> Wstecz
             </button>
@@ -756,7 +781,7 @@ export function Wizard({
               Anuluj
             </Link>
           )}
-          {step < STEPS.length - 1 ? (
+          {step < LAST ? (
             <button type="button" className="btn" onClick={next}>
               Dalej <Icon name="arrowRight" size={18} className="arrow" />
             </button>
