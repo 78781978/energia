@@ -59,9 +59,14 @@ export type BannerKey = keyof typeof BANNERS;
 
 export function Banner({ name, href, label, priority = false, className = "" }: { name: BannerKey; href?: string; label?: string; priority?: boolean; className?: string }) {
   const b = BANNERS[name];
+  // Wersja @2x (powiększona i wyostrzona) dla ekranów o wysokiej rozdzielczości
+  const src2x = b.src.replace(/\.jpg$/, "@2x.jpg");
+  const square = b.w === b.h;
   const img = (
     <img
       src={b.src}
+      srcSet={`${b.src} ${b.w}w, ${src2x} ${b.w * 2}w`}
+      sizes={square ? "(max-width: 760px) 100vw, 560px" : "(max-width: 1248px) 100vw, 1152px"}
       alt={b.alt}
       width={b.w}
       height={b.h}
