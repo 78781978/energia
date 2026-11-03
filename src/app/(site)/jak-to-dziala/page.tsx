@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs, Dot, FaqList, SectionHead } from "@/components/site/blocks";
 import { Banner } from "@/components/site/Banner";
+import { ProcessSteps } from "@/components/site/ProcessSteps";
 import { Icon } from "@/components/Icon";
 import { getService } from "@/lib/content";
 import { STATUS_HELP, STATUS_LABEL, APP_STATUSES } from "@/lib/constants";
@@ -50,7 +51,10 @@ export default function HowItWorks() {
       <section className="section section--white">
         <div className="container">
           <SectionHead center eyebrow="Wniosek" title={<Dot>7 kroków do nowej umowy</Dot>} />
-          <Banner name="proces" />
+          <ProcessSteps />
+          <div style={{ marginTop: 64 }}>
+            <Banner name="proces" />
+          </div>
         </div>
       </section>
 
