@@ -27,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/analityka/", label: "Analityka", icon: "chart" },
         { href: "/admin/newsletter/", label: "Newsletter", icon: "mail" },
         { href: "/admin/zespol/", label: "Zespół", icon: "users" },
+        { href: "/admin/bezpieczenstwo/", label: "Stan bezpieczeństwa", icon: "shield" },
         { href: "/admin/konto/", label: "Moje konto", icon: "lock" },
       ]}
     >

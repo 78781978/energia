@@ -3,6 +3,16 @@ import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { ALLOWED_UPLOAD_TYPES, MAX_UPLOAD_BYTES } from "./constants";
+import { FileRejected, scanFile } from "./filescan";
+
+async function checked(buf: Buffer, mime: string, name: string) {
+  try {
+    await scanFile(buf, mime, name);
+  } catch (e) {
+    if (e instanceof FileRejected) throw new UploadError(e.message);
+    throw e;
+  }
+}
 
 const ROOT = path.resolve(process.env.STORAGE_DIR || "./storage");
 
@@ -31,6 +41,7 @@ export async function saveUpload(file: File, opts: { pdfOnly?: boolean; allowXml
   const mime = sniff(buf) ?? (opts.allowXml && sniffXml(buf) ? "application/xml" : null);
   if (!mime || !ALLOWED_UPLOAD_TYPES[mime]) throw new UploadError(opts.allowXml ? "Dozwolone formaty: PDF, XML (KSeF), JPG, PNG." : "Dozwolone formaty: PDF, JPG, PNG.");
   if (opts.pdfOnly && mime !== "application/pdf") throw new UploadError("Prześlij dokument w formacie PDF.");
+  await checked(buf, mime, file.name);
   const storedName = `${new Date().toISOString().slice(0, 7)}/${randomBytes(16).toString("hex")}.${ALLOWED_UPLOAD_TYPES[mime]}`;
   const full = path.join(ROOT, storedName);
   await mkdir(path.dirname(full), { recursive: true, mode: 0o750 });
@@ -90,6 +101,7 @@ export async function saveImage(file: File): Promise<StoredImage> {
   const buf = Buffer.from(await file.arrayBuffer());
   const mime = sniffImage(buf);
   if (!mime) throw new UploadError("Dozwolone formaty obrazów: JPG, PNG, WebP.");
+  await checked(buf, mime, file.name);
   const dims = imageSize(buf);
   const storedName = `media/${randomBytes(12).toString("hex")}.${IMAGE_EXT[mime]}`;
   const full = path.join(ROOT, storedName);
