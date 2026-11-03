@@ -6,7 +6,7 @@ import { adminUpdateCompany } from "@/app/actions/admin";
 import { initialFormState } from "@/lib/forms";
 import { FieldError, FormAlert, SubmitButton, invalid } from "@/components/forms";
 import { LEGAL_FORMS } from "@/lib/constants";
-import { PointsEditor, type CompanyDraft, type PointDraft } from "@/app/portal/(panel)/wniosek/ApplicationWizard";
+import { PointsEditor, type CompanyDraft, type PointDraft } from "@/components/app/PointsEditor";
 
 export function CompanyForm({ company, points: initial, mode }: { company: CompanyDraft; points: PointDraft[]; mode: "client" | "admin" }) {
   const [state, action] = useActionState(mode === "admin" ? adminUpdateCompany : updateMyCompany, initialFormState);

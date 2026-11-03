@@ -33,7 +33,7 @@ export default function HowItWorks() {
                 decyzję podejmujesz Ty.
               </p>
               <div className="btn-row">
-                <Link className="btn btn--lg" href="/portal/rejestracja/">
+                <Link className="btn btn--lg" href="/portal/wniosek/">
                   Załóż darmowe konto <Icon name="arrowRight" size={18} className="arrow" />
                 </Link>
                 <Link className="btn btn--lg btn--secondary" href="/kontakt/?typ=rozmowa">

@@ -1,11 +1,12 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { verifyTotp } from "@/lib/totp";
 import { db } from "@/lib/db";
 import { clientIp, createSession, destroySession, hashPassword, hashToken, newToken, rateLimit, verifyPassword } from "@/lib/auth";
-import { readAttribution } from "@/lib/attribution";
 import { sendMail } from "@/lib/mail";
-import { isValidEmail, isValidPhone, passwordProblem, str } from "@/lib/validators";
+import { isValidEmail, passwordProblem, str } from "@/lib/validators";
 import type { FormState } from "@/lib/forms";
 import { SITE } from "@/lib/site";
 
@@ -25,47 +26,47 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   // Porównanie wykonujemy zawsze, aby czas odpowiedzi nie zdradzał, czy konto istnieje.
   const ok = user ? await verifyPassword(password, user.passwordHash) : (await hashPassword(password), false);
   if (!user || !ok || !user.isActive) return { error: "Nieprawidłowy e-mail lub hasło.", values };
-  await createSession(user.id);
-  redirect(safeNext(str(fd.get("next")), user.role === "ADMIN" ? "/admin/" : "/portal/"));
+  const remember = fd.get("remember") === "on";
+  const next = safeNext(str(fd.get("next")), user.role === "ADMIN" ? "/admin/" : "/portal/");
+  if (user.totpEnabledAt && user.totpSecret) {
+    // Drugi krok logowania – kod z aplikacji uwierzytelniającej
+    const token = newToken();
+    await db.emailToken.create({
+      data: { id: hashToken(token), userId: user.id, purpose: "LOGIN_2FA", data: JSON.stringify({ remember, next }), expiresAt: new Date(Date.now() + 10 * 60e3) },
+    });
+    (await cookies()).set(TWO_FA_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/portal/", maxAge: 600 });
+    redirect("/portal/logowanie/kod/");
+  }
+  await createSession(user.id, remember);
+  redirect(next);
 }
 
-export async function register(_prev: FormState, fd: FormData): Promise<FormState> {
-  const values = {
-    email: str(fd.get("email"), 200).toLowerCase(),
-    phone: str(fd.get("phone"), 30),
-    name: str(fd.get("name"), 120),
-  };
-  const password = String(fd.get("password") ?? "");
-  const fe: Record<string, string> = {};
-  if (!isValidEmail(values.email)) fe.email = "Wpisz poprawny adres e-mail.";
-  const pp = passwordProblem(password);
-  if (pp) fe.password = pp;
-  if (password !== String(fd.get("password2") ?? "")) fe.password2 = "Hasła nie są takie same.";
-  if (values.phone && !isValidPhone(values.phone)) fe.phone = "Wpisz poprawny numer telefonu.";
-  if (!fd.get("terms")) fe.terms = "Akceptacja regulaminu jest wymagana.";
-  if (Object.keys(fe).length) return { error: "Popraw zaznaczone pola.", fieldErrors: fe, values };
-  if (!rateLimit(`register:${await clientIp()}`, 5, 60 * 60 * 1000)) return { error: "Zbyt wiele prób. Spróbuj ponownie później.", values };
+const TWO_FA_COOKIE = "eo_2fa";
 
-  const exists = await db.user.findUnique({ where: { email: values.email } });
-  if (exists) return { error: "Konto z tym adresem już istnieje. Zaloguj się lub zresetuj hasło.", fieldErrors: { email: "Ten adres jest już zarejestrowany." }, values };
-
-  const user = await db.user.create({
-    data: {
-      email: values.email,
-      passwordHash: await hashPassword(password),
-      phone: values.phone || null,
-      name: values.name || null,
-      marketingConsent: Boolean(fd.get("marketing")),
-      source: await readAttribution(),
-    },
-  });
-  await sendMail({
-    to: user.email,
-    subject: `Witamy w portalu ${SITE.portalBrand}`,
-    text: `Dzień dobry,\n\nTwoje konto w portalu ${SITE.portalBrand} zostało utworzone.\n\nKolejny krok: wypełnij wniosek o ofertę – podaj dane firmy i punktów poboru albo prześlij fakturę.\n${SITE.url}/portal/wniosek/\n\nW razie pytań odpowiedz na tę wiadomość.`,
-  });
-  await createSession(user.id);
-  redirect("/portal/wniosek/?nowe=1");
+export async function verifyTwoFactor(_prev: FormState, fd: FormData): Promise<FormState> {
+  const jar = await cookies();
+  const token = jar.get(TWO_FA_COOKIE)?.value;
+  const rec = token ? await db.emailToken.findUnique({ where: { id: hashToken(token) } }) : null;
+  if (!rec || rec.purpose !== "LOGIN_2FA" || rec.usedAt || rec.expiresAt < new Date()) return { error: "Sesja logowania wygasła. Zaloguj się ponownie.", fieldErrors: { expired: "1" } };
+  if (!rateLimit(`2fa:${rec.userId}`, 6, 10 * 60e3)) return { error: "Zbyt wiele błędnych kodów. Zaloguj się ponownie za kilka minut." };
+  const user = await db.user.findUnique({ where: { id: rec.userId } });
+  if (!user || !user.isActive || !user.totpSecret) return { error: "Nie można dokończyć logowania." };
+  const code = str(fd.get("code"), 20).toUpperCase();
+  let ok = verifyTotp(user.totpSecret, code);
+  if (!ok && /^[0-9A-F]{5}-?[0-9A-F]{5}$/.test(code)) {
+    const hashes: string[] = JSON.parse(user.backupCodes || "[]");
+    const h = hashToken(code.replace("-", ""));
+    if (hashes.includes(h)) {
+      ok = true;
+      await db.user.update({ where: { id: user.id }, data: { backupCodes: JSON.stringify(hashes.filter((x) => x !== h)) } });
+    }
+  }
+  if (!ok) return { error: "Nieprawidłowy kod. Sprawdź aplikację uwierzytelniającą lub użyj kodu zapasowego." };
+  const meta = JSON.parse(rec.data || "{}") as { remember?: boolean; next?: string };
+  await db.emailToken.update({ where: { id: rec.id }, data: { usedAt: new Date() } });
+  jar.delete({ name: TWO_FA_COOKIE, path: "/portal/" });
+  await createSession(user.id, Boolean(meta.remember));
+  redirect(safeNext(meta.next ?? null, user.role === "ADMIN" ? "/admin/" : "/portal/"));
 }
 
 export async function logout(): Promise<void> {

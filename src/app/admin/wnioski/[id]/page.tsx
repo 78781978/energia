@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { DocList, PageHead, StatusBadge, StatusProgress, fmtDate, fmtDateTime, fmtNum } from "@/components/app/ui";
-import { AdminUploadForm, AssignOfferForm, MessageForm, NoteForm, ParamsForm, StatusForm } from "@/components/app/AdminForms";
+import { AdminUploadForm, AssignOfferForm, EditAssignmentForm, MessageForm, NoteForm, ParamsForm, PointAdminForm, StatusForm } from "@/components/app/AdminForms";
 import { CompanyForm } from "@/components/app/CompanyForm";
 import { Icon } from "@/components/Icon";
 import { MEDIA, OFFER_ASSIGNMENT_STATUS, PRICE_MODELS, STATUS_LABEL, type AppStatus } from "@/lib/constants";
@@ -91,16 +91,30 @@ export default async function AdminApplication({ params }: { params: Promise<{ i
               <h2>Parametry wniosku</h2>
             </div>
             <dl className="dl" style={{ marginBottom: 16 }}>
-              <dt>Media / model</dt>
+              <dt>Media / warianty</dt>
               <dd>
-                {MEDIA[app.media as keyof typeof MEDIA]} · {PRICE_MODELS[app.priceModel as keyof typeof PRICE_MODELS]?.label}
+                {MEDIA[app.media as keyof typeof MEDIA]} ·{" "}
+                {(app.priceModels ?? app.priceModel)
+                  .split(",")
+                  .map((m) => PRICE_MODELS[m as keyof typeof PRICE_MODELS]?.label ?? m)
+                  .join(" · ")}
               </dd>
               <dt>Lata</dt>
               <dd>{app.years.replace(/,/g, ", ")}</dd>
-              <dt>Taryfa / zużycie</dt>
+              <dt>Prąd: taryfa / zużycie</dt>
               <dd>
                 {app.tariff ?? "–"} / {app.annualUsageMWh != null ? `${fmtNum(app.annualUsageMWh)} MWh` : "–"}
               </dd>
+              {app.media !== "PRAD" && (
+                <>
+                  <dt>Gaz: taryfa / zużycie</dt>
+                  <dd>
+                    {app.tariffGas ?? "–"} / {app.annualUsageGasMWh != null ? `${fmtNum(app.annualUsageGasMWh)} MWh` : "–"}
+                  </dd>
+                </>
+              )}
+              <dt>E-mail klienta</dt>
+              <dd>{app.user.emailVerifiedAt ? "potwierdzony" : <span className="badge badge--warn">niepotwierdzony</span>}</dd>
               <dt>Konto klienta</dt>
               <dd>
                 <Link href={`/admin/klienci/${app.userId}/`}>{app.user.email}</Link>
@@ -140,7 +154,7 @@ export default async function AdminApplication({ params }: { params: Promise<{ i
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>PPE</th>
+                      <th>PPE / PPG</th>
                       <th>Adres</th>
                       <th>Sprzedawca / OSD</th>
                       <th>Taryfa</th>
@@ -154,7 +168,11 @@ export default async function AdminApplication({ params }: { params: Promise<{ i
                       <tr key={p.id}>
                         <td>
                           <strong>{p.ppeNumber ?? "–"}</strong>
-                          <div className="muted small">{p.medium === "GAZ" ? "Gaz" : "Prąd"}</div>
+                          <div className="muted small">
+                            {p.medium === "GAZ" ? "Gaz" : "Prąd"}
+                            {p.name && ` · ${p.name}`}
+                            {p.meterNumber && ` · licznik ${p.meterNumber}`}
+                          </div>
                         </td>
                         <td>{[p.street, p.postalCode, p.city].filter(Boolean).join(", ") || "–"}</td>
                         <td>
@@ -173,6 +191,32 @@ export default async function AdminApplication({ params }: { params: Promise<{ i
             ) : (
               <p className="muted small">Brak punktów – uzupełnij je na podstawie faktury w danych firmy poniżej.</p>
             )}
+            {app.points.length > 0 && (
+              <details style={{ marginTop: 16 }}>
+                <summary style={{ cursor: "pointer", fontWeight: 700 }}>Umowy liczników: nowe daty, oszczędności, priorytet</summary>
+                <div className="stack" style={{ marginTop: 12 }}>
+                  {app.points.map(({ point: p }) => (
+                    <div key={p.id} className="ppe-card">
+                      <strong>
+                        {p.name || (p.medium === "GAZ" ? "Gaz" : "Prąd")} · {p.ppeNumber ?? "bez numeru"}
+                      </strong>
+                      <PointAdminForm
+                        applicationId={app.id}
+                        p={{
+                          id: p.id,
+                          newContractStart: p.newContractStart?.toISOString().slice(0, 10) ?? "",
+                          newContractEnd: p.newContractEnd?.toISOString().slice(0, 10) ?? "",
+                          contractEndDate: p.contractEndDate?.toISOString().slice(0, 10) ?? "",
+                          noticeDays: p.noticeDays,
+                          savingsPln: p.savingsPln,
+                          priority: p.priority,
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </details>
+            )}
           </section>
 
           <section className="panel">
@@ -190,7 +234,13 @@ export default async function AdminApplication({ params }: { params: Promise<{ i
                       </strong>
                       <span>
                         {fmtNum(o.customPriceNetMWh ?? o.offer.priceNetMWh)} zł/MWh · {OFFER_ASSIGNMENT_STATUS[o.status as keyof typeof OFFER_ASSIGNMENT_STATUS]}
+                        {o.auto && " · z generatora"}
+                        {o.editableUntil && (o.editableUntil > new Date() ? ` · korekta do ${fmtDateTime(o.editableUntil)}` : " · zatwierdzona")}
                       </span>
+                      <EditAssignmentForm
+                        a={{ id: o.id, customPriceNetMWh: o.customPriceNetMWh, note: o.note, auto: o.auto, editableUntil: o.editableUntil ? fmtDateTime(o.editableUntil) : null }}
+                        locked={o.status !== "PROPONOWANA" || Boolean(o.editableUntil && o.editableUntil < new Date())}
+                      />
                     </div>
                     {o.status === "WYBRANA" ? (
                       <span className="badge badge--ok">wybrana</span>

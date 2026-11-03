@@ -344,7 +344,7 @@ export function BannerForm({ k, alt, href, hidden, defaultHref }: { k: string; a
       </div>
       <div className="field">
         <label htmlFor={`href-${k}`}>Link po kliknięciu {defaultHref ? <span className="opt">(domyślnie {defaultHref})</span> : <span className="opt">(opcjonalnie)</span>}</label>
-        <input id={`href-${k}`} className="input" name="href" defaultValue={href ?? ""} placeholder={defaultHref ?? "/portal/rejestracja/"} {...invalid(state, "href")} />
+        <input id={`href-${k}`} className="input" name="href" defaultValue={href ?? ""} placeholder={defaultHref ?? "/portal/wniosek/"} {...invalid(state, "href")} />
         <FieldError state={state} name="href" />
       </div>
       <label className="check">

@@ -5,6 +5,7 @@ import { CookieBar } from "@/components/site/CookieBar";
 import { CATEGORIES } from "@/lib/content";
 import { getSiteSettings } from "@/lib/cms";
 import { JsonLd, organizationLd } from "@/components/site/JsonLd";
+import { OrderBand } from "@/components/site/OrderBand";
 
 // Odświeżanie stron po zmianach w panelu (Treści) – najpóźniej co 5 minut, a po zapisie od razu.
 export const revalidate = 300;
@@ -18,7 +19,10 @@ export default async function SiteLayout({ children }: { children: React.ReactNo
         Przejdź do treści
       </a>
       <SiteHeader categories={nav} />
-      <main id="tresc">{children}</main>
+      <main id="tresc">
+        {children}
+        <OrderBand />
+      </main>
       <SiteFooter />
       <HelpWidget phone={st.phone} />
       <CookieBar />

@@ -103,15 +103,18 @@ export async function updateApplicationParams(_prev: FormState, fd: FormData): P
   const id = str(fd.get("applicationId"), 40);
   const app = await db.application.findUniqueOrThrow({ where: { id } });
   const media = str(fd.get("media"), 10);
-  const priceModel = str(fd.get("priceModel"), 20);
+  const models = fd.getAll("priceModels").map(String).filter((m) => m in PRICE_MODELS);
   const years = str(fd.get("years"), 60).replace(/[^\d,]/g, "");
-  if (!(media in MEDIA) || !(priceModel in PRICE_MODELS) || !years) return { error: "Uzupełnij media, model ceny i lata (np. 2027,2028)." };
+  if (!(media in MEDIA) || !models.length || !years) return { error: "Uzupełnij media, co najmniej jeden wariant i lata (np. 2027,2028)." };
   const data = {
     media,
-    priceModel,
+    priceModel: models[0],
+    priceModels: models.join(","),
     years,
     tariff: str(fd.get("tariff"), 30) || null,
     annualUsageMWh: parseNumber(fd.get("annualUsageMWh")),
+    tariffGas: str(fd.get("tariffGas"), 30) || null,
+    annualUsageGasMWh: parseNumber(fd.get("annualUsageGasMWh")),
     wantsCall: fd.get("wantsCall") === "on",
   };
   await db.application.update({ where: { id }, data });
@@ -283,6 +286,56 @@ export async function assignOffer(_prev: FormState, fd: FormData): Promise<FormS
   }
   revalidatePath(appPath(applicationId));
   return { ok: true, message: "Oferta przypisana do wniosku." };
+}
+
+/** Korekta propozycji (cena, uwaga) – dla ofert z generatora tylko w ciągu 24 godzin od przygotowania. */
+export async function editOfferAssignment(_prev: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const id = str(fd.get("assignmentId"), 40);
+  const asg = await db.offerAssignment.findUnique({ where: { id }, include: { offer: true } });
+  if (!asg) return { error: "Nie znaleziono propozycji." };
+  if (asg.status !== "PROPONOWANA") return { error: "Klient już zdecydował – propozycji nie można zmienić." };
+  if (asg.editableUntil && asg.editableUntil < new Date()) return { error: "Minęło 24 godziny – propozycję można tylko usunąć i przypisać nową." };
+  const data = {
+    customPriceNetMWh: parseNumber(fd.get("customPriceNetMWh")),
+    note: str(fd.get("note"), 1000) || null,
+    ...(fd.get("approve") === "on" ? { editableUntil: new Date() } : {}),
+  };
+  await db.offerAssignment.update({ where: { id }, data });
+  await audit(admin.id, "Application", asg.applicationId, "offer_edited", diff({ customPriceNetMWh: asg.customPriceNetMWh, note: asg.note } as Record<string, unknown>, { customPriceNetMWh: data.customPriceNetMWh, note: data.note }));
+  revalidatePath(appPath(asg.applicationId));
+  revalidatePath(`/portal/wnioski/${asg.applicationId}/`);
+  return { ok: true, message: fd.get("approve") === "on" ? "Zapisano i zatwierdzono propozycję." : "Zapisano zmiany propozycji." };
+}
+
+const PRIORITIES = ["WYSOKI", "SREDNI", "NISKI"];
+
+/** Dane licznika uzupełniane przez doradcę: nowa umowa, oszczędności, priorytet. */
+export async function updatePointAdmin(_prev: FormState, fd: FormData): Promise<FormState> {
+  const admin = await requireAdmin();
+  const id = str(fd.get("pointId"), 40);
+  const point = await db.meteringPoint.findUnique({ where: { id } });
+  if (!point) return { error: "Nie znaleziono licznika." };
+  const date = (k: string) => {
+    const v = str(fd.get(k), 10);
+    return /^\d{4}-\d{2}-\d{2}$/.test(v) ? new Date(v) : null;
+  };
+  const priority = str(fd.get("priority"), 10);
+  const notice = parseNumber(fd.get("noticeDays"));
+  const data = {
+    newContractStart: date("newContractStart"),
+    newContractEnd: date("newContractEnd"),
+    contractEndDate: date("contractEndDate"),
+    noticeDays: notice != null && notice >= 0 && notice <= 730 ? Math.round(notice) : null,
+    savingsPln: parseNumber(fd.get("savingsPln")),
+    priority: PRIORITIES.includes(priority) ? priority : null,
+  };
+  await db.meteringPoint.update({ where: { id }, data });
+  await audit(admin.id, "MeteringPoint", id, "update", diff(point as unknown as Record<string, unknown>, data));
+  const appId = str(fd.get("applicationId"), 40);
+  if (appId) revalidatePath(appPath(appId));
+  revalidatePath("/portal/liczniki/");
+  return { ok: true, message: "Zapisano." };
 }
 
 export async function removeOfferAssignment(fd: FormData): Promise<void> {

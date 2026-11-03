@@ -4,9 +4,8 @@ import { db } from "@/lib/db";
 import { companyDraft, pointDrafts } from "@/lib/drafts";
 import { PageHead } from "@/components/app/ui";
 import { CompanyForm } from "@/components/app/CompanyForm";
-import { AccountForm } from "./AccountForm";
 
-export const metadata = { title: "Moje dane" };
+export const metadata = { title: "Dane firmy" };
 
 export default async function MyDataPage() {
   const user = await requireClient();
@@ -16,19 +15,18 @@ export default async function MyDataPage() {
   ]);
   return (
     <>
-      <PageHead title="Moje dane" sub="Dane firmy, osoby kontaktowej i punktów poboru energii." />
+      <PageHead title="Dane firmy" sub="Dane firmy, osoby kontaktowej i liczników (PPE/PPG). Dane konta i zgody zmienisz w Ustawieniach konta." />
       <div className="stack">
         {companies.length === 0 && (
           <div className="panel">
             <p style={{ margin: 0 }}>
-              Dane firmy pojawią się po złożeniu pierwszego wniosku. <Link href="/portal/wniosek/">Wypełnij wniosek</Link>
+              Dane firmy pojawią się po złożeniu pierwszego zamówienia. <Link href="/portal/wniosek/">Generator ofert</Link>
             </p>
           </div>
         )}
         {companies.map((c) => (
           <CompanyForm key={c.id} company={companyDraft(c, me)} points={pointDrafts(c.points)} mode="client" />
         ))}
-        <AccountForm email={me.email} name={me.name} phone={me.phone} marketing={me.marketingConsent} />
       </div>
     </>
   );

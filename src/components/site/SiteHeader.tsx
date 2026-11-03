@@ -118,7 +118,7 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
             <Icon name="user" size={18} /> {portalLabel}
           </Link>
           {!loggedIn && (
-            <Link href="/portal/rejestracja/" className="btn btn--sm">
+            <Link href="/portal/wniosek/" className="btn btn--sm">
               Porównaj oferty <Icon name="arrowRight" size={18} className="arrow" />
             </Link>
           )}
@@ -162,7 +162,7 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
           <Link href="/o-nas/">O nas</Link>
           <Link href="/kontakt/">Kontakt</Link>
           <div className="mobile-nav__actions">
-            <Link href="/portal/rejestracja/" className="btn btn--lg">
+            <Link href="/portal/wniosek/" className="btn btn--lg">
               Porównaj oferty <Icon name="arrowRight" size={18} className="arrow" />
             </Link>
             <Link href={portalHref} className="btn btn--ghost btn--lg">

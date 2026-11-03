@@ -16,7 +16,7 @@ export function AppShell({
   footer,
 }: {
   nav: NavItem[];
-  user: { email: string; name: string | null; roleLabel: string };
+  user: { email: string; name: string | null; roleLabel: string; avatar?: string | null };
   logo: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
@@ -59,8 +59,8 @@ export function AppShell({
         <div className="app-sidebar__foot">
           {footer}
           <div className="app-user">
-            <span className="app-user__avatar" aria-hidden="true">
-              {initials}
+            <span className="app-user__avatar" aria-hidden="true" style={user.avatar ? { background: "#fff", overflow: "hidden" } : undefined}>
+              {user.avatar ? <img src={user.avatar} alt="" style={{ width: "100%", height: "100%", objectFit: "contain" }} /> : initials}
             </span>
             <div className="app-user__meta">
               <div style={{ fontWeight: 700 }}>{user.name || user.email}</div>

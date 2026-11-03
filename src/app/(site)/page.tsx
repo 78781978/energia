@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { MeetUs } from "@/components/site/OrderBand";
 import { featuredFaq } from "@/lib/content";
 import { getCategoryCards, listPublishedPosts } from "@/lib/cms";
 import { Dot, FaqList, SectionHead } from "@/components/site/blocks";
@@ -28,10 +29,10 @@ export default async function HomePage() {
           <h1 id="h1" className="sr-only">
             Lepsza energia dla Twojej firmy. Porównaj oferty dostawców, wybierz najlepszą i załatw wszystko online.
           </h1>
-          <Banner name="lepszaEnergia" href="/portal/rejestracja/" label="Porównaj oferty – załóż konto w portalu" priority />
+          <Banner name="lepszaEnergia" href="/portal/wniosek/" label="Jedna rejestracja – wiele ofert od sprawdzonych dostawców. Załóż darmowe konto" priority />
           <div className="banner-actions">
-            <Link className="btn btn--lg" href="/portal/rejestracja/">
-              Porównaj oferty <Icon name="arrowRight" size={18} className="arrow" />
+            <Link className="btn btn--lg" href="/portal/wniosek/">
+              Załóż darmowe konto <Icon name="arrowRight" size={18} className="arrow" />
             </Link>
             <Link className="btn btn--lg btn--secondary" href="/kontakt/?typ=analiza">
               Prześlij fakturę do analizy
@@ -100,7 +101,7 @@ export default async function HomePage() {
           />
           <Banner name="proces" href="/jak-to-dziala/" label="Zobacz, jak działa zakup energii online" />
           <div className="banner-actions" style={{ marginTop: 40 }}>
-            <Link className="btn btn--lg" href="/portal/rejestracja/">
+            <Link className="btn btn--lg" href="/portal/wniosek/">
               Załóż darmowe konto <Icon name="arrowRight" size={18} className="arrow" />
             </Link>
             <Link className="btn btn--lg btn--ghost" href="/jak-to-dziala/">
@@ -114,9 +115,9 @@ export default async function HomePage() {
       <section className="section--tight" aria-label="Portal Energia Online i doradztwo Energia 360">
         <div className="container banner-pair">
           <div>
-            <Banner name="kierunek" href="/portal/rejestracja/" label="Wejdź na portal Energia Online" />
+            <Banner name="kierunek" href="/portal/wniosek/" label="Wejdź na portal Energia Online" />
             <div className="banner-actions">
-              <Link className="btn btn--lg" href="/portal/rejestracja/">
+              <Link className="btn btn--lg" href="/portal/wniosek/">
                 Wejdź na portal <Icon name="arrowRight" size={18} className="arrow" />
               </Link>
             </div>
@@ -212,6 +213,9 @@ export default async function HomePage() {
         </section>
       )}
 
+      {/* Poznaj nas */}
+      <MeetUs />
+
       {/* 8. FAQ */}
       {faq.length > 0 && (
         <section className="section section--white" aria-labelledby="faq">
@@ -235,7 +239,7 @@ export default async function HomePage() {
               <Link className="btn btn--lg btn--light" href="/kontakt/?typ=analiza">
                 Prześlij fakturę
               </Link>
-              <Link className="btn btn--lg" href="/portal/rejestracja/">
+              <Link className="btn btn--lg" href="/portal/wniosek/">
                 Rozpocznij porównanie <Icon name="arrowRight" size={18} className="arrow" />
               </Link>
             </div>

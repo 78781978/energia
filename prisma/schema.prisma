@@ -22,7 +22,16 @@ model User {
   role             String    @default("CLIENT") // CLIENT | ADMIN
   name             String?
   phone            String?
-  marketingConsent Boolean   @default(false)
+  marketingConsent Boolean   @default(false) // informacje handlowe e-mailem
+  smsConsent       Boolean   @default(false) // informacje handlowe SMS-em
+  newsletterConsent Boolean  @default(false)
+  consentsUpdatedAt DateTime?
+  emailVerifiedAt  DateTime?
+  avatarStoredName String?   // zdjęcie / logo firmy (STORAGE_DIR/media)
+  totpSecret       String?   // logowanie dwuetapowe (TOTP)
+  totpEnabledAt    DateTime?
+  backupCodes      String?   // JSON – skróty kodów zapasowych
+  deletionRequestedAt DateTime? // wniosek o usunięcie konta / cofnięcie zgody RODO
   // źródło pozyskania (analityka): utm_source / utm_medium / utm_campaign / referrer
   source           String?
   isActive         Boolean   @default(true)
@@ -48,9 +57,34 @@ model Session {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   userAgent String?
+  persistent Boolean @default(true) // „Zapamiętaj mnie”
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// Jednorazowe tokeny e-mail: potwierdzenie adresu, drugi krok logowania (2FA)
+model EmailToken {
+  id        String    @id // skrót SHA-256 tokenu
+  userId    String
+  purpose   String    // VERIFY | LOGIN_2FA
+  data      String?
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+// Wysłane przypomnienia (aby nie wysyłać ich wielokrotnie)
+model ReminderSent {
+  id        String   @id @default(cuid())
+  userId    String
+  kind      String
+  refId     String
+  createdAt DateTime @default(now())
+
+  @@unique([kind, refId])
 }
 
 model PasswordResetToken {
@@ -97,7 +131,9 @@ model MeteringPoint {
   companyId        String
   company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
   medium           String   @default("PRAD") // PRAD | GAZ
-  ppeNumber        String?
+  name             String?  // nazwa licznika / obiektu, np. „Sklep Kraków”
+  meterNumber      String?  // numer licznika
+  ppeNumber        String?  // numer PPE (prąd) lub PPG (gaz)
   street           String?
   postalCode       String?
   city             String?
@@ -106,7 +142,12 @@ model MeteringPoint {
   tariff           String?
   annualUsageMWh   Float?
   contractedPowerKw Float?
-  contractEndDate  DateTime?
+  contractEndDate  DateTime? // koniec obecnej umowy
+  noticeDays       Int?      // okres wypowiedzenia (dni)
+  newContractStart DateTime? // nowa umowa (uzupełnia doradca)
+  newContractEnd   DateTime?
+  savingsPln       Float?    // szacowane oszczędności
+  priority         String?   // WYSOKI | SREDNI | NISKI
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -122,9 +163,12 @@ model Application {
   company       Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
   media         String    // PRAD | GAZ | PRAD_GAZ
   years         String    // np. "2027,2028"
-  priceModel    String    // STALA | RDN | TRANSZE | OZE | INDYWIDUALNA
-  tariff        String?
-  annualUsageMWh Float?
+  priceModel    String    // pierwszy wybrany wariant (zgodność wsteczna)
+  priceModels   String?   // wszystkie wybrane warianty, np. "STALA,RDN"
+  tariff        String?   // taryfa prądu
+  annualUsageMWh Float?   // roczne zużycie prądu
+  tariffGas     String?
+  annualUsageGasMWh Float?
   clientComment String?
   wantsCall     Boolean   @default(false)
   status        String    @default("WNIOSEK_UTWORZONY")
@@ -253,6 +297,8 @@ model OfferAssignment {
   customPriceNetMWh Float?
   note          String?
   status        String      @default("PROPONOWANA") // PROPONOWANA | WYBRANA | ODRZUCONA
+  auto          Boolean     @default(false) // dobrana automatycznie przez generator
+  editableUntil DateTime?   // doradca może zmienić ofertę do tej chwili (max 24 h)
   decidedAt     DateTime?
   createdAt     DateTime    @default(now())
 
@@ -262,7 +308,8 @@ model OfferAssignment {
 // Zapytania z formularzy serwisu (kontakt, rozmowa z doradcą, analiza faktury)
 model Lead {
   id          String    @id @default(cuid())
-  type        String    // KONTAKT | ROZMOWA | ANALIZA
+  type        String    // KONTAKT | ROZMOWA | ANALIZA | PRODUKT_TECHNICZNY | POMOC_PRAWNA
+  userId      String?   // zapytanie złożone z portalu
   name        String
   company     String?
   nip         String?
