@@ -33,8 +33,8 @@ export async function saveUpload(file: File, opts: { pdfOnly?: boolean; allowXml
   if (opts.pdfOnly && mime !== "application/pdf") throw new UploadError("Prześlij dokument w formacie PDF.");
   const storedName = `${new Date().toISOString().slice(0, 7)}/${randomBytes(16).toString("hex")}.${ALLOWED_UPLOAD_TYPES[mime]}`;
   const full = path.join(ROOT, storedName);
-  await mkdir(path.dirname(full), { recursive: true });
-  await writeFile(full, buf);
+  await mkdir(path.dirname(full), { recursive: true, mode: 0o750 });
+  await writeFile(full, buf, { mode: 0o640 });
   const fileName = (file.name || "dokument").replace(/[^\p{L}\p{N}._ -]/gu, "_").slice(0, 120);
   return { storedName, fileName, mimeType: mime, size: buf.length };
 }

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { verifyTotp } from "@/lib/totp";
 import { db } from "@/lib/db";
 import { clientIp, createSession, destroySession, hashPassword, hashToken, newToken, rateLimit, verifyPassword } from "@/lib/auth";
@@ -20,12 +20,16 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
   const values = { email };
   if (!isValidEmail(email) || !password) return { error: "Wpisz adres e-mail i hasło.", values };
   const ip = await clientIp();
-  if (!rateLimit(`login:${ip}:${email}`, 8) || !rateLimit(`login-ip:${ip}`, 30))
+  // limity: e-mail z danego IP, całe IP oraz samo konto (chroni przed zgadywaniem z wielu adresów)
+  if (!(await rateLimit(`login:${ip}:${email}`, 8)) || !(await rateLimit(`login-ip:${ip}`, 30)) || !(await rateLimit(`login-acct:${email}`, 25, 60 * 60e3)))
     return { error: "Zbyt wiele prób logowania. Spróbuj ponownie za 15 minut lub zresetuj hasło.", values };
   const user = await db.user.findUnique({ where: { email } });
   // Porównanie wykonujemy zawsze, aby czas odpowiedzi nie zdradzał, czy konto istnieje.
   const ok = user ? await verifyPassword(password, user.passwordHash) : (await hashPassword(password), false);
-  if (!user || !ok || !user.isActive) return { error: "Nieprawidłowy e-mail lub hasło.", values };
+  if (!user || !ok || !user.isActive) {
+    await db.auditLog.create({ data: { actorId: user?.id ?? null, entityType: "Auth", entityId: user?.id ?? email.slice(0, 120), action: "login_failed", changes: JSON.stringify({ ip: [null, ip] }) } });
+    return { error: "Nieprawidłowy e-mail lub hasło.", values };
+  }
   const remember = fd.get("remember") === "on";
   const next = safeNext(str(fd.get("next")), user.role === "ADMIN" ? "/admin/" : "/portal/");
   if (user.totpEnabledAt && user.totpSecret) {
@@ -37,8 +41,27 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
     (await cookies()).set(TWO_FA_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/portal/", maxAge: 600 });
     redirect("/portal/logowanie/kod/");
   }
+  await loginSucceeded(user.id, user.email, user.role, ip);
   await createSession(user.id, remember);
   redirect(next);
+}
+
+/** Zapis udanego logowania; administrator dostaje e-mail o każdym logowaniu (wykrycie przejęcia konta). */
+async function loginSucceeded(userId: string, email: string, role: string, ip: string) {
+  const ua = (await headers()).get("user-agent")?.slice(0, 200) ?? "-";
+  await db.auditLog.create({ data: { actorId: userId, entityType: "Auth", entityId: userId, action: "login", changes: JSON.stringify({ ip: [null, ip] }) } });
+  if (role === "ADMIN")
+    await sendMail({
+      to: email,
+      subject: "Nowe logowanie do panelu administratora",
+      text: `Zalogowano się na Twoje konto administratora.
+
+Czas: ${new Date().toLocaleString("pl-PL")}
+Adres IP: ${ip}
+Przeglądarka: ${ua}
+
+Jeśli to nie Ty – natychmiast zmień hasło i skontaktuj się z zespołem.`,
+    });
 }
 
 const TWO_FA_COOKIE = "eo_2fa";
@@ -48,7 +71,7 @@ export async function verifyTwoFactor(_prev: FormState, fd: FormData): Promise<F
   const token = jar.get(TWO_FA_COOKIE)?.value;
   const rec = token ? await db.emailToken.findUnique({ where: { id: hashToken(token) } }) : null;
   if (!rec || rec.purpose !== "LOGIN_2FA" || rec.usedAt || rec.expiresAt < new Date()) return { error: "Sesja logowania wygasła. Zaloguj się ponownie.", fieldErrors: { expired: "1" } };
-  if (!rateLimit(`2fa:${rec.userId}`, 6, 10 * 60e3)) return { error: "Zbyt wiele błędnych kodów. Zaloguj się ponownie za kilka minut." };
+  if (!await rateLimit(`2fa:${rec.userId}`, 6, 10 * 60e3)) return { error: "Zbyt wiele błędnych kodów. Zaloguj się ponownie za kilka minut." };
   const user = await db.user.findUnique({ where: { id: rec.userId } });
   if (!user || !user.isActive || !user.totpSecret) return { error: "Nie można dokończyć logowania." };
   const code = str(fd.get("code"), 20).toUpperCase();
@@ -65,6 +88,7 @@ export async function verifyTwoFactor(_prev: FormState, fd: FormData): Promise<F
   const meta = JSON.parse(rec.data || "{}") as { remember?: boolean; next?: string };
   await db.emailToken.update({ where: { id: rec.id }, data: { usedAt: new Date() } });
   jar.delete({ name: TWO_FA_COOKIE, path: "/portal/" });
+  await loginSucceeded(user.id, user.email, user.role, await clientIp());
   await createSession(user.id, Boolean(meta.remember));
   redirect(safeNext(meta.next ?? null, user.role === "ADMIN" ? "/admin/" : "/portal/"));
 }
@@ -77,7 +101,7 @@ export async function logout(): Promise<void> {
 export async function requestPasswordReset(_prev: FormState, fd: FormData): Promise<FormState> {
   const email = str(fd.get("email"), 200).toLowerCase();
   if (!isValidEmail(email)) return { error: "Wpisz poprawny adres e-mail.", values: { email } };
-  if (!rateLimit(`reset:${await clientIp()}`, 5, 60 * 60 * 1000)) return { error: "Zbyt wiele prób. Spróbuj ponownie później." };
+  if (!await rateLimit(`reset:${await clientIp()}`, 5, 60 * 60 * 1000)) return { error: "Zbyt wiele prób. Spróbuj ponownie później." };
   const user = await db.user.findUnique({ where: { email } });
   if (user && user.isActive) {
     const token = newToken();

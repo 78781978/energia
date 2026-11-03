@@ -22,7 +22,7 @@ echo "▸ Składanie paczki"
 cp -r .next/standalone/. "$OUT/"
 mkdir -p "$OUT/.next" && cp -r .next/static "$OUT/.next/static"
 cp -r public "$OUT/public"
-cp deploy/start.js deploy/setup.js "$OUT/"
+cp deploy/start.js deploy/setup.js deploy/kopia.sh "$OUT/"
 # setup.js potrzebuje bcryptjs poza paczką Next.js
 mkdir -p "$OUT/node_modules" && cp -r node_modules/bcryptjs "$OUT/node_modules/"
 cp dist/prisma/schema.prisma "$OUT/schema.prisma"

@@ -97,7 +97,7 @@ Kolory (#FF3026, #C92A22, #232629, #FAF7F0, #62666B), typografia DejaVu Sans (H1
 
 ## Bezpieczeństwo
 
-Hasła bcrypt, sesje w bazie (httpOnly cookie), limity prób logowania i formularzy, pliki weryfikowane po sygnaturze (PDF/JPG/PNG, do 10 MB) i przechowywane poza katalogiem publicznym, pobieranie tylko dla właściciela lub administratora, ochrona eksportu CSV przed wstrzykiwaniem formuł, nagłówki bezpieczeństwa.
+Pełny opis zabezpieczeń i lista kontrolna przed startem: **[BEZPIECZENSTWO.md](BEZPIECZENSTWO.md)**.
 
 ## Struktura
 

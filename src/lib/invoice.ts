@@ -30,7 +30,8 @@ const OPERATORS = ["PGE Dystrybucja", "TAURON Dystrybucja", "Enea Operator", "En
 
 async function pdfText(buf: Buffer): Promise<string> {
   const { extractText, getDocumentProxy } = await import("unpdf");
-  const pdf = await getDocumentProxy(new Uint8Array(buf));
+  // pdf.js 6.x (w unpdf) – bez wykonywania kodu z plików PDF (CVE-2024-4367 usunięta u źródła); tylko odczyt tekstu
+  const pdf = await getDocumentProxy(new Uint8Array(buf), { useSystemFonts: false, stopAtErrors: false });
   const { text } = await extractText(pdf, { mergePages: true });
   return Array.isArray(text) ? text.join("\n") : text;
 }

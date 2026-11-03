@@ -1,5 +1,5 @@
 import type { Prisma } from "@prisma/client";
-import { getCurrentUser } from "@/lib/auth";
+import { adminOrNull } from "@/lib/auth";
 import { ci, db } from "@/lib/db";
 import { ADMIN_VIEWS, APP_STATUSES, MEDIA, PRICE_MODELS, STATUS_LABEL, type AppStatus } from "@/lib/constants";
 
@@ -13,7 +13,7 @@ const cell = (v: unknown) => {
 };
 
 export async function GET(req: Request) {
-  const user = await getCurrentUser();
+  const user = await adminOrNull();
   if (!user || user.role !== "ADMIN") return new Response("Brak dostępu", { status: 403 });
   const sp = new URL(req.url).searchParams;
   const where: Prisma.ApplicationWhereInput = {};

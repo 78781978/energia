@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 /** Odczyt danych z faktury (PDF z tekstem lub XML z KSeF) dla kreatora – plik nie jest zapisywany. */
 export async function POST(req: Request) {
   const ip = await clientIp();
-  if (!rateLimit(`invoice:${ip}`, 30, 60 * 60 * 1000)) return NextResponse.json({ error: "Zbyt wiele prób. Spróbuj za chwilę." }, { status: 429 });
+  if (!await rateLimit(`invoice:${ip}`, 30, 60 * 60 * 1000)) return NextResponse.json({ error: "Zbyt wiele prób. Spróbuj za chwilę." }, { status: 429 });
   const fd = await req.formData().catch(() => null);
   const file = fd?.get("file");
   if (!(file instanceof File) || file.size === 0) return NextResponse.json({ error: "Brak pliku." }, { status: 400 });

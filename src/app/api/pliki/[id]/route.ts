@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getCurrentUser } from "@/lib/auth";
+import { adminTwoFactorRequired, getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { readStored } from "@/lib/storage";
 
@@ -16,7 +16,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   });
   if (!doc) return new NextResponse("Nie znaleziono", { status: 404 });
 
-  const isAdmin = user.role === "ADMIN";
+  const isAdmin = user.role === "ADMIN" && (user.twoFactor || !adminTwoFactorRequired());
   let allowed = isAdmin;
   if (!allowed && doc.visibleToClient) {
     if (doc.application?.userId === user.id || doc.company?.ownerId === user.id) allowed = true;
