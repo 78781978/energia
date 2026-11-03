@@ -178,7 +178,7 @@ export async function saveBanner(_prev: FormState, fd: FormData): Promise<FormSt
   const next = { ...cur };
   next.alt = str(fd.get("alt"), 1000) || undefined;
   const href = str(fd.get("href"), 300);
-  if (href && !/^(\/|https:\/\/|#)/.test(href)) return { error: "Link musi zaczynać się od / (strona w serwisie) albo https://", fieldErrors: { href: "Np. /portal/rejestracja/ lub https://…" } };
+  if (href && !/^(\/|https:\/\/|#)/.test(href)) return { error: "Link musi zaczynać się od / (strona w serwisie) albo https://", fieldErrors: { href: "Np. /portal/wniosek/ lub https://…" } };
   next.href = href || null;
   next.hidden = fd.get("hidden") === "on";
   const file = fd.get("file");

@@ -13,6 +13,11 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 | 5 | **Hosting i domena** oraz produkcyjna baza danych (zalecany PostgreSQL) i miejsce na pliki klientów z kopią zapasową | – | lokalnie działa SQLite + katalog `storage/` |
 | 6 | **Potwierdzenie obietnicy „odpowiadamy w ciągu jednego dnia roboczego”** – księga znaku zaleca nie obiecywać tego, czego nie dowozimy | formularze kontaktowe, e-mail do klienta | tekst jest użyty – zmień, jeśli SLA jest inne |
 
+| 6a | **Klucze Cloudflare Turnstile** (darmowe) dla domeny | captcha przy rejestracji w kreatorze | bez kluczy działa pole-pułapka i minimalny czas wypełnienia |
+| 6b | **Akceptacja prawnika: klauzula przy ofertach** („propozycje mają charakter informacyjny… mogą zostać zaktualizowane w ciągu 24 godzin…”) i treści zgód (e-mail, SMS, newsletter) | karta ofert, etap 7 kreatora, ustawienia konta | teksty robocze w `src/lib/wizard.ts` i `src/app/portal/wniosek/Wizard.tsx` |
+| 6c | **Harmonogram zadań (cron) i `CRON_SECRET`** na hostingu | przypomnienia e-mail | instrukcja: `WDROZENIE-CYBERFOLKS.md`, krok 7 |
+| 6d | **Przykładowe faktury różnych sprzedawców** (PDF i XML z KSeF, prąd i gaz) do dostrojenia odczytu | „Wczytaj dane z faktury” w kreatorze | odczyt działa dla PDF z warstwą tekstową i XML KSeF; skany wymagają OCR (etap C) |
+
 ## B. Grafika i identyfikacja
 
 | # | Czego brakuje | Dlaczego |
@@ -38,7 +43,11 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 ## D. Kolejne etapy (zgodnie ze specyfikacją – nie wchodzą w MVP)
 
 - **Asystent AI (czat)** z przejęciem rozmowy przez konsultanta, umawianiem spotkań i telefonem – w serwisie jest już widżet z awatarem Iskry (przekierowuje do formularzy); do decyzji: dostawca modelu AI, godziny pracy konsultantów, narzędzie do kalendarza.
-- **OCR faktur** (odczyt PPE, taryfy, zużycia, operatora) – wymaga wyboru usługi OCR i zbioru przykładowych faktur różnych sprzedawców do testów.
+- **OCR skanów faktur** – odczyt z PDF z tekstem i XML KSeF już działa; skany/zdjęcia wymagają usługi OCR.
+- **Reguły generatora cenników** (marże, progi zużycia, automatyczne ceny wg taryfy) – teraz generator dobiera oferty wprowadzone w panelu; potrzebne zasady wyceny.
+- **Dane rynkowe** (ENTSO-E, TGE) w „Informacjach z rynku” – teraz kafelek prowadzi do Aktualności; potrzebny dostęp do API/licencja danych TGE.
+- **SMS** – zgoda SMS jest zbierana; do wyboru bramka SMS (np. SMSAPI) i treści powiadomień.
+- **Strony regionalne / mapa** – potrzebna lista miast i treści.
 - **Newsletter – automatyzacje**: zapis i eksport CSV działają; do wyboru narzędzie wysyłkowe (np. Klaviyo, HubSpot) i integracja.
 - **Analityka zewnętrzna**: wbudowana analityka (źródła UTM, lejek i miejsca porzucenia formularza) działa; do decyzji GA4/Tag Manager + Google Search Console.
 - **SEO lokalne**: landing pages dla miast, case studies, artykuły poradnikowe – potrzebna lista lokalizacji i treści.

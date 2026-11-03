@@ -13,17 +13,21 @@ Serwis doradczy (76 podstron usług w 10 kategoriach) oraz portal klienta i pane
 - SEO: meta tagi, kanoniczne adresy, `sitemap.xml`, `robots.txt`, dane strukturalne Organization, Service, BreadcrumbList, FAQPage, ItemList,
 - widżet pomocy z awatarem Iskry, baner cookies (źródło wejścia UTM zapisywane tylko po zgodzie), newsletter.
 
-**Portal klienta** (`/portal/`)
-- rejestracja (e-mail + hasło, opcjonalnie telefon), logowanie, reset hasła,
-- wniosek w 7 krokach wg grafiki procesu: media → lata → model ceny → taryfa i zużycie → faktura PDF → dane firmy i punktów poboru (wiele PPE) → podsumowanie / „zamów rozmowę z doradcą”; walidacja NIP, REGON, kodów pocztowych, PPE,
-- pulpit: status bieżącego wniosku, ostatnie dokumenty, komunikaty od doradcy,
-- szczegóły wniosku: pasek statusu, oferty do wyboru, podpisanie umowy (pobierz → podpisz → prześlij PDF), dokumenty, punkty poboru, historia,
-- dokumenty (umowy, załączniki, historia) i „Moje dane” (firma, kontakt, punkty poboru, konto).
+**Portal klienta** (`/portal/`) – wg tablicy Miro
+- **kreator zamówienia `/portal/wniosek/` dostępny bez logowania** (rejestracja na końcu): etap 0 dane firmy → 1 media → 2 lata → 3 warianty zakupu (wielokrotny wybór, opisy zależne od mediów) → 4 taryfa i zużycie (osobno prąd i gaz) → 5 faktury (osobno prąd i gaz, PDF lub XML z KSeF) → 6 liczniki (**„Wczytaj dane z faktury”** – odczyt PPE/PPG, nr licznika, taryfy, adresu, sprzedawcy i OSD z PDF z tekstem lub XML KSeF; „Wpisz ręcznie”; „Pomiń krok”) → 7 podsumowanie, hasło, osobne zgody (regulamin+RODO, e-mail, SMS, newsletter), ochrona przed botami → **„Zarejestruj profil i wygeneruj ofertę”**,
+- **generator ofert**: po złożeniu zamówienia system dobiera do 3 aktywnych ofert (media, warianty, lata, ważność) i pokazuje je z animacją; doradca może je skorygować przez 24 godziny (klauzula przy ofertach),
+- **potwierdzenie e-mail** (link ważny 72 h) – do tego czasu nie można wybrać oferty ani przesłać podpisanej umowy,
+- logowanie z opcją **„Zapamiętaj mnie”** (14 dni / sesja przeglądarki), **logowanie dwuetapowe** (aplikacja Authenticator, kod QR, 8 kodów zapasowych), zmiana hasła,
+- **pulpit „Witaj w Portalu Klienta Biznesowego”**: kafelki (Generator ofert, Zamówienia, Umowy, Liczniki i umowy, Informacje z rynku, Kontakt z ekspertem), nowe zamówienie (energia, gaz, produkt techniczny, pomoc prawna), przewodnik „Jak zacząć”,
+- **Liczniki i umowy**: tabela PPE/PPG (nazwa, adres, status, dostawca, produkt, cena, początek/koniec umowy, oszczędności, priorytet, suma) z eksportem do Excela (CSV) i plikiem kalendarza `.ics`,
+- **Ustawienia konta**: dane, logo firmy, hasło, 2FA, zgody i powiadomienia, kalendarz terminów, RODO (kopia danych JSON, wniosek o usunięcie konta),
+- szczegóły zamówienia: status, oferty, podpis umowy (pobierz → podpisz → prześlij PDF), dokumenty, liczniki, historia,
+- **przypomnienia e-mail** (`/api/cron/przypomnienia/`): niepotwierdzony e-mail, termin wypowiedzenia (30 i 7 dni), wygasająca oferta, umowa czekająca na podpis > 3 dni – każde wysyłane raz.
 
 **Panel administratora** (`/admin/`)
 - lista wniosków z widokami (wszystkie / aktywne / oczekujące na podpis / aktywowane / odrzucone), filtrami (NIP, nazwa firmy, status, data zgłoszenia) i eksportem CSV,
-- karta wniosku: pełne dane, edycja danych firmy i PPE, zmiana statusu z powiadomieniem klienta, historia statusów, **log zmian** (kto, kiedy, co zmienił), notatki wewnętrzne, komunikaty do klienta, upload/pobieranie PDF, widoczność dokumentów dla klienta, przypisywanie ofert,
-- klienci (baza kont, firm i PPE), oferty i cenniki PDF, zapytania z formularzy, analityka (źródła wejścia, lejek formularza i miejsca porzucenia), newsletter z eksportem, zespół (konta administratorów).
+- karta wniosku: pełne dane, edycja danych firmy i PPE, dane umów liczników (nowa umowa od–do, wypowiedzenie, oszczędności, priorytet), korekta i zatwierdzanie propozycji z generatora (24 h), zmiana statusu z powiadomieniem klienta, historia statusów, **log zmian** (kto, kiedy, co zmienił), notatki wewnętrzne, komunikaty do klienta, upload/pobieranie PDF, widoczność dokumentów dla klienta, przypisywanie ofert,
+- klienci (baza kont, firm i PPE; potwierdzenie e-mail, 2FA, zgody i wnioski RODO), oferty i cenniki PDF, zapytania z formularzy, analityka (źródła wejścia, lejek formularza i miejsca porzucenia), newsletter z eksportem, zespół (konta administratorów).
 
 **Edycja treści (CMS w panelu administratora)**
 - **Treści strony** – teksty 10 kategorii i 76 podstron usług: nagłówki, treść (edytor z paskiem narzędzi i podglądem), przyciski, FAQ, meta title/description; „Przywróć oryginał” cofa wszystkie zmiany podstrony,

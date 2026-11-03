@@ -1,20 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState } from "react";
 import { updateMyAccount } from "@/app/actions/portal";
 import { initialFormState } from "@/lib/forms";
 import { FieldError, FormAlert, SubmitButton, invalid } from "@/components/forms";
 
-export function AccountForm({ email, name, phone, marketing }: { email: string; name: string | null; phone: string | null; marketing: boolean }) {
+export function AccountForm({ email, name, phone }: { email: string; name: string | null; phone: string | null }) {
   const [state, action] = useActionState(updateMyAccount, initialFormState);
   return (
     <section className="panel" aria-labelledby="konto">
       <div className="panel__head">
-        <h2 id="konto">Konto</h2>
-        <Link href="/portal/reset-hasla/" className="small">
-          Zmień hasło
-        </Link>
+        <h2 id="konto">Twoje dane</h2>
       </div>
       <form action={action} className="form" style={{ gap: 16 }}>
         <div className="form-row form-row--3">
@@ -32,10 +28,6 @@ export function AccountForm({ email, name, phone, marketing }: { email: string; 
             <FieldError state={state} name="phone" />
           </div>
         </div>
-        <label className="check">
-          <input type="checkbox" name="marketing" defaultChecked={marketing} />
-          <span>Chcę otrzymywać informacje o ofertach energii i zmianach na rynku.</span>
-        </label>
         <FormAlert state={state} />
         <div>
           <SubmitButton className="btn" arrow={false} pending="Zapisuję…">

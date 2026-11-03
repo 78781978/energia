@@ -58,10 +58,16 @@ export type Media = keyof typeof MEDIA;
 
 export const PRICE_MODELS = {
   STALA: { label: "Gwarancja stałej ceny", help: "Cena sprzedaży ustalona na cały okres umowy." },
-  RDN: { label: "Ceny giełdowe RDN (SPOT)", help: "Koszt zakupu powiązany z Rynkiem Dnia Następnego." },
-  TRANSZE: { label: "Zakup w transzach", help: "Zakup częściami w różnych momentach (np. BASE/PEAK)." },
-  OZE: { label: "Energia z OZE", help: "Oferty z gwarancjami pochodzenia lub z odnawialnych źródeł." },
-  INDYWIDUALNA: { label: "Wycena indywidualna", help: "Doradca zaproponuje model po analizie danych." },
+  RDN: { label: "Ceny giełdowe RDN", help: "Koszt zakupu powiązany z Rynkiem Dnia Następnego (SPOT)." },
+  TRANSZE: { label: "Cena giełdowa – zakup w transzach", help: "Zakup częściami w różnych momentach (np. BASE/PEAK)." },
+  INDYWIDUALNA: { label: "Wycena indywidualna", help: "Doradca zaproponuje najlepszą strategię zakupu po analizie danych." },
+  OZE: { label: "Zakup energii z gwarancją pochodzenia OZE", help: "Energia z odnawialnych źródeł potwierdzona gwarancjami pochodzenia." },
+  PPA: { label: "PPA – umowa z producentem energii", help: "Długoterminowy zakup energii bezpośrednio od wytwórcy OZE." },
+  UPPA: { label: "uPPA – wirtualna umowa PPA", help: "Finansowe rozliczenie ceny energii z producentem OZE." },
+  KOMPLEKSOWA: { label: "Umowa kompleksowa", help: "Sprzedaż i dystrybucja w jednej umowie." },
+  AUDYT_DYSTRYBUCJI: { label: "Audyt kosztów dystrybucji", help: "Sprawdzimy moc umowną, taryfę i opłaty dystrybucyjne." },
+  PRODUKTY_TECHNICZNE: { label: "Produkty techniczne", help: "Kompensacja mocy biernej, magazyny energii, serwis i inne." },
+  ANALIZA_OPTYMALNA: { label: "Analiza optymalnego zakupu prądu i gazu", help: "Porównamy warianty dla obu mediów i wskażemy najlepszy." },
 } as const;
 export type PriceModel = keyof typeof PRICE_MODELS;
 
@@ -104,7 +110,13 @@ export const LEGAL_FORMS = [
   "Inna",
 ];
 
-export const LEAD_TYPES = { KONTAKT: "Kontakt", ROZMOWA: "Rozmowa z doradcą", ANALIZA: "Analiza faktury" } as const;
+export const LEAD_TYPES = {
+  KONTAKT: "Kontakt",
+  ROZMOWA: "Rozmowa z doradcą",
+  ANALIZA: "Analiza faktury",
+  PRODUKT_TECHNICZNY: "Produkt techniczny",
+  POMOC_PRAWNA: "Pomoc prawna",
+} as const;
 export const LEAD_STATUSES = { NOWE: "Nowe", W_TOKU: "W toku", ZAMKNIETE: "Zamknięte" } as const;
 export const OFFER_ASSIGNMENT_STATUS = { PROPONOWANA: "Proponowana", WYBRANA: "Wybrana przez klienta", ODRZUCONA: "Odrzucona" } as const;
 
@@ -113,4 +125,5 @@ export const ALLOWED_UPLOAD_TYPES: Record<string, string> = {
   "application/pdf": "pdf",
   "image/jpeg": "jpg",
   "image/png": "png",
+  "application/xml": "xml",
 };

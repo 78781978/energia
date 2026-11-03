@@ -16,14 +16,20 @@ function sniff(buf: Buffer): string | null {
   return null;
 }
 
+/** Faktura ustrukturyzowana z KSeF (XML). Akceptujemy tylko dokumenty XML, przechowujemy je i wydajemy wyłącznie jako załącznik. */
+function sniffXml(buf: Buffer): boolean {
+  const head = buf.subarray(0, 300).toString("utf8").replace(/^\uFEFF/, "").trimStart();
+  return head.startsWith("<?xml") || /^<([A-Za-z_][\w.-]*:)?Faktura[\s>]/.test(head);
+}
+
 export type StoredFile = { storedName: string; fileName: string; mimeType: string; size: number };
 
-export async function saveUpload(file: File, opts: { pdfOnly?: boolean } = {}): Promise<StoredFile> {
+export async function saveUpload(file: File, opts: { pdfOnly?: boolean; allowXml?: boolean } = {}): Promise<StoredFile> {
   if (!file || file.size === 0) throw new UploadError("Nie wybrano pliku.");
   if (file.size > MAX_UPLOAD_BYTES) throw new UploadError("Plik jest za duży. Maksymalny rozmiar to 10 MB.");
   const buf = Buffer.from(await file.arrayBuffer());
-  const mime = sniff(buf);
-  if (!mime || !ALLOWED_UPLOAD_TYPES[mime]) throw new UploadError("Dozwolone formaty: PDF, JPG, PNG.");
+  const mime = sniff(buf) ?? (opts.allowXml && sniffXml(buf) ? "application/xml" : null);
+  if (!mime || !ALLOWED_UPLOAD_TYPES[mime]) throw new UploadError(opts.allowXml ? "Dozwolone formaty: PDF, XML (KSeF), JPG, PNG." : "Dozwolone formaty: PDF, JPG, PNG.");
   if (opts.pdfOnly && mime !== "application/pdf") throw new UploadError("Prześlij dokument w formacie PDF.");
   const storedName = `${new Date().toISOString().slice(0, 7)}/${randomBytes(16).toString("hex")}.${ALLOWED_UPLOAD_TYPES[mime]}`;
   const full = path.join(ROOT, storedName);

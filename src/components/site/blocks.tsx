@@ -92,7 +92,7 @@ export function PortalModule({ title, body, ctas, slug }: { title: string | null
             </div>
           </div>
           {/* Grafika w całości, bez kadrowania */}
-          <Banner name="kierunek" href="/portal/rejestracja/" label="Wejdź na portal Energia Online" />
+          <Banner name="kierunek" href="/portal/wniosek/" label="Wejdź na portal Energia Online" />
         </div>
       </div>
     </section>

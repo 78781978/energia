@@ -10,10 +10,10 @@ export const metadata = { title: "Banery i grafiki" };
 
 /** Domyślne linki banerów – jak na stronie */
 const DEFAULT_HREF: Partial<Record<BannerKey, string>> = {
-  lepszaEnergia: "/portal/rejestracja/",
+  lepszaEnergia: "/portal/wniosek/",
   rozwiazania: "#kategorie",
   spoldzielnie: "/spoldzielnie-energetyczne-i-dsr/",
-  kierunek: "/portal/rejestracja/",
+  kierunek: "/portal/wniosek/",
   doradca: "/energia-360/",
   proces: "/jak-to-dziala/",
 };

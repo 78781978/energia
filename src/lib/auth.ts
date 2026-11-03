@@ -25,18 +25,22 @@ export async function verifyPassword(pw: string, hash: string): Promise<boolean>
   return bcrypt.compare(pw, hash);
 }
 
-export async function createSession(userId: string): Promise<void> {
+/**
+ * Tworzy sesję. `remember` = „Zapamiętaj mnie”: ciasteczko trwałe na 14 dni.
+ * Bez zaznaczenia: ciasteczko sesyjne (znika po zamknięciu przeglądarki), ważne najwyżej 12 godzin.
+ */
+export async function createSession(userId: string, remember = true): Promise<void> {
   const token = newToken();
-  const expiresAt = new Date(Date.now() + SESSION_DAYS * 864e5);
+  const expiresAt = new Date(Date.now() + (remember ? SESSION_DAYS * 864e5 : 12 * 3600e3));
   const ua = (await headers()).get("user-agent")?.slice(0, 250) ?? null;
-  await db.session.create({ data: { id: hashToken(token), userId, expiresAt, userAgent: ua } });
+  await db.session.create({ data: { id: hashToken(token), userId, expiresAt, userAgent: ua, persistent: remember } });
   await db.user.update({ where: { id: userId }, data: { lastLoginAt: new Date() } });
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    expires: expiresAt,
+    ...(remember ? { expires: expiresAt } : {}),
   });
 }
 
@@ -53,6 +57,8 @@ export type CurrentUser = {
   role: string;
   name: string | null;
   phone: string | null;
+  emailVerifiedAt: Date | null;
+  avatarStoredName: string | null;
 };
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
@@ -60,7 +66,7 @@ export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   if (!token) return null;
   const session = await db.session.findUnique({
     where: { id: hashToken(token) },
-    include: { user: { select: { id: true, email: true, role: true, name: true, phone: true, isActive: true } } },
+    include: { user: { select: { id: true, email: true, role: true, name: true, phone: true, isActive: true, emailVerifiedAt: true, avatarStoredName: true } } },
   });
   if (!session || session.expiresAt < new Date() || !session.user.isActive) return null;
   const { isActive: _a, ...user } = session.user;

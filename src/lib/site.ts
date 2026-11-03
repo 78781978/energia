@@ -20,6 +20,6 @@ export const SITE = {
   social: { linkedin: null as string | null, facebook: null as string | null },
 };
 
-export const PORTAL_REGISTER = "/portal/rejestracja/";
+export const PORTAL_REGISTER = "/portal/wniosek/";
 export const PORTAL_LOGIN = "/portal/logowanie/";
 export const PORTAL_NEW_APPLICATION = "/portal/wniosek/";

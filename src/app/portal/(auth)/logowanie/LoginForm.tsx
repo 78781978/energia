@@ -31,12 +31,16 @@ export function LoginForm({ next, loggedOut }: { next: string; loggedOut: boolea
           </Link>
         </div>
       </div>
+      <label className="check">
+        <input type="checkbox" name="remember" defaultChecked />
+        <span>Zapamiętaj mnie na tym urządzeniu (14 dni)</span>
+      </label>
       <FormAlert state={state} />
       <SubmitButton className="btn btn--lg btn--block" pending="Logowanie…" arrow={false}>
         Zaloguj się
       </SubmitButton>
       <p className="small" style={{ margin: 0 }}>
-        Nie masz konta? <Link href="/portal/rejestracja/">Utwórz konto</Link>
+        Nie masz konta? <Link href="/portal/wniosek/">Załóż darmowe konto i otrzymaj oferty</Link>
       </p>
     </form>
   );

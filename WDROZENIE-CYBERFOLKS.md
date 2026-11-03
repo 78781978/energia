@@ -50,6 +50,8 @@ W katalogu aplikacji skopiuj `.env.example` jako `.env` i uzupełnij:
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` | dane skrzynki z panelu poczty cyber_Folks (port 465 – SSL lub 587 – STARTTLS) |
 | `MAIL_FROM` | np. `Energia w Biznesie <powiadomienia@twoja-domena.pl>` |
 | `NOTIFY_EMAIL` | adres, na który przychodzą nowe wnioski i zapytania |
+| `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | (zalecane) klucze Cloudflare Turnstile – ochrona rejestracji przed botami; darmowe konto na dash.cloudflare.com → Turnstile → Add site (domena) |
+| `CRON_SECRET` | długi losowy ciąg (min. 32 znaki) – klucz do przypomnień e-mail (krok 7) |
 
 Te same zmienne można zamiast tego wpisać w ustawieniach aplikacji Node.js w panelu (krok 4). Wartości z panelu mają pierwszeństwo przed plikiem `.env`.
 
@@ -89,11 +91,23 @@ Następnie usuń `ADMIN_PASSWORD` z `.env` i **zrestartuj aplikację** (przycisk
 4. Testowo załóż konto klienta i wyślij wniosek z fakturą PDF. Sprawdź, czy wniosek widać w panelu i czy przyszły e-maile.
 5. Zgłoś mapę strony w Google Search Console: `https://twoja-domena.pl/sitemap.xml`.
 
+## 7. Przypomnienia e-mail (harmonogram zadań)
+
+Portal wysyła przypomnienia (niepotwierdzony e-mail, termin wypowiedzenia umowy, wygasająca oferta, umowa czekająca na podpis). Uruchamia je raz dziennie harmonogram zadań:
+
+DirectAdmin → **Advanced Features → Cron Jobs** (Zadania cron) → dodaj zadanie: minuta `15`, godzina `7`, pozostałe pola `*`, polecenie:
+
+```bash
+curl -fsS "https://twoja-domena.pl/api/cron/przypomnienia/?klucz=TWOJ_CRON_SECRET" > /dev/null
+```
+
+Każde przypomnienie jest wysyłane tylko raz, więc ponowne uruchomienie niczego nie dubluje.
+
 ## Aktualizacja do nowej wersji
 
 1. Pobierz nową paczkę (krok 0).
 2. W katalogu aplikacji podmień wszystko **oprócz** pliku `.env` (katalog `energia-pliki` leży osobno i zostaje nietknięty).
-3. Jeśli opis zmian mówi o zmianie bazy, uruchom migrację zgodnie z instrukcją dołączoną do tej wersji.
+3. Jeśli opis zmian mówi o zmianie bazy, uruchom `node setup.js` – skrypt dodaje brakujące tabele i kolumny (istniejące dane zostają).
 4. Zrestartuj aplikację w panelu.
 
 ## Kopie zapasowe

@@ -37,7 +37,7 @@ export function HelpWidget({ phone }: { phone: string | null }) {
             </div>
           </div>
           <div className="help-panel__body">
-            <Link className="help-link" href="/portal/rejestracja/" onClick={() => setOpen(false)}>
+            <Link className="help-link" href="/portal/wniosek/" onClick={() => setOpen(false)}>
               Chcę porównać oferty prądu lub gazu <Icon name="arrowRight" size={18} />
             </Link>
             <Link className="help-link" href="/kontakt/?typ=analiza" onClick={() => setOpen(false)}>

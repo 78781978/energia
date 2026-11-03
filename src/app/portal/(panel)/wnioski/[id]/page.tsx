@@ -8,10 +8,12 @@ import { Icon } from "@/components/Icon";
 import { MEDIA, PRICE_MODELS, STATUS_HELP, STATUS_LABEL, type AppStatus } from "@/lib/constants";
 import { chooseOffer, requestCall } from "@/app/actions/portal";
 import { SubmitButton } from "@/components/forms";
+import { GeneratorReveal } from "@/components/app/GeneratorReveal";
+import { OFFER_CLAUSE } from "@/lib/wizard";
 
 export const metadata = { title: "Szczegóły wniosku" };
 
-export default async function ApplicationDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ nowy?: string }> }) {
+export default async function ApplicationDetail({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ nowy?: string; generuj?: string; nowe?: string }> }) {
   const user = await requireClient();
   const { id } = await params;
   const sp = await searchParams;
@@ -30,6 +32,9 @@ export default async function ApplicationDetail({ params, searchParams }: { para
   const status = app.status as AppStatus;
   const contracts = app.documents.filter((d) => d.kind === "UMOWA");
   const chosen = app.offers.find((o) => o.status === "WYBRANA");
+  const verified = Boolean(user.emailVerifiedAt);
+  const fresh = sp.nowy === "1" || sp.generuj === "1";
+  const models = (app.priceModels ?? app.priceModel).split(",").filter(Boolean);
 
   return (
     <>
@@ -38,14 +43,16 @@ export default async function ApplicationDetail({ params, searchParams }: { para
       </p>
       <PageHead title={`Wniosek ${app.number}`} sub={`${app.company.name} · złożony ${fmtDate(app.createdAt)}`} actions={<StatusBadge status={app.status} />} />
 
-      {sp.nowy === "1" && (
+      {sp.generuj === "1" && <GeneratorReveal found={app.offers.length} />}
+      {fresh && (
         <div className="panel" style={{ display: "flex", gap: 24, alignItems: "center", marginBottom: 24, flexWrap: "wrap" }}>
           <img src="/img/3d/potwierdzenie.png" alt="" width={160} height={121} style={{ width: 160 }} />
           <div style={{ flex: "1 1 320px" }}>
-            <h2 style={{ fontSize: 22, marginBottom: 6 }}>Wniosek został wysłany</h2>
+            <h2 style={{ fontSize: 22, marginBottom: 6 }}>{sp.nowe === "1" ? "Profil zarejestrowany, zamówienie przyjęte" : "Zamówienie przyjęte"}</h2>
             <p className="muted" style={{ margin: 0 }}>
-              Wysłaliśmy potwierdzenie na Twój adres e-mail. Doradca zweryfikuje dane i przygotuje oferty – o zmianach statusu poinformujemy Cię
-              e-mailem.
+              {app.offers.length
+                ? "Poniżej znajdziesz wstępne propozycje dobrane przez generator. Doradca sprawdzi je i w razie potrzeby zaktualizuje w ciągu 24 godzin."
+                : "Doradca zweryfikuje dane i przygotuje oferty – o zmianach statusu poinformujemy Cię e-mailem."}
             </p>
           </div>
         </div>
@@ -76,7 +83,7 @@ export default async function ApplicationDetail({ params, searchParams }: { para
               </ol>
               <DocList docs={contracts} empty="Umowa zostanie udostępniona przez doradcę." />
               <div style={{ marginTop: 16 }}>
-                <ClientUpload applicationId={app.id} signed />
+                {verified ? <ClientUpload applicationId={app.id} signed /> : <p className="small muted">Potwierdź adres e-mail, aby przesłać podpisaną umowę.</p>}
               </div>
             </section>
           )}
@@ -106,10 +113,13 @@ export default async function ApplicationDetail({ params, searchParams }: { para
                         <Icon name="file" size={16} /> Cennik / warunki (PDF)
                       </a>
                     )}
+                    {o.auto && o.editableUntil && o.editableUntil > new Date() && <span className="badge badge--plain" style={{ whiteSpace: "normal", alignSelf: "flex-start" }}>Propozycja wstępna – weryfikacja doradcy</span>}
                     {o.status === "WYBRANA" ? (
                       <span className="badge badge--ok">Wybrana oferta</span>
                     ) : o.status === "ODRZUCONA" ? (
                       <span className="badge">Niewybrana</span>
+                    ) : !chosen && !verified ? (
+                      <span className="small muted">Potwierdź adres e-mail, aby wybrać ofertę.</span>
                     ) : !chosen ? (
                       <form action={chooseOffer}>
                         <input type="hidden" name="assignmentId" value={o.id} />
@@ -124,6 +134,7 @@ export default async function ApplicationDetail({ params, searchParams }: { para
               <p className="small muted" style={{ marginTop: 12, marginBottom: 0 }}>
                 Cena za MWh nie obejmuje opłat dystrybucyjnych, podatków i innych składników faktury.
               </p>
+              <p className="offer-clause">{OFFER_CLAUSE}</p>
             </section>
           )}
 
@@ -144,8 +155,8 @@ export default async function ApplicationDetail({ params, searchParams }: { para
 
           <section className="panel" aria-labelledby="ppe">
             <div className="panel__head">
-              <h2 id="ppe">Punkty poboru ({app.points.length})</h2>
-              <Link href="/portal/moje-dane/" className="small">
+              <h2 id="ppe">Liczniki ({app.points.length})</h2>
+              <Link href="/portal/liczniki/" className="small">
                 Edytuj dane
               </Link>
             </div>
@@ -154,7 +165,7 @@ export default async function ApplicationDetail({ params, searchParams }: { para
                 <table className="data-table">
                   <thead>
                     <tr>
-                      <th>PPE</th>
+                      <th>Licznik / PPE / PPG</th>
                       <th>Adres</th>
                       <th>Taryfa</th>
                       <th>Zużycie</th>
@@ -166,7 +177,11 @@ export default async function ApplicationDetail({ params, searchParams }: { para
                       <tr key={p.id}>
                         <td>
                           <strong>{p.ppeNumber ?? "–"}</strong>
-                          <div className="muted small">{p.medium === "GAZ" ? "Gaz" : "Prąd"}</div>
+                          <div className="muted small">
+                            {p.medium === "GAZ" ? "Gaz" : "Prąd"}
+                            {p.name && ` · ${p.name}`}
+                            {p.meterNumber && ` · licznik ${p.meterNumber}`}
+                          </div>
                         </td>
                         <td>{[p.street, p.postalCode, p.city].filter(Boolean).join(", ") || "–"}</td>
                         <td>{p.tariff ?? "–"}</td>
@@ -193,12 +208,24 @@ export default async function ApplicationDetail({ params, searchParams }: { para
               <dd>{MEDIA[app.media as keyof typeof MEDIA]}</dd>
               <dt>Lata</dt>
               <dd>{app.years.replace(/,/g, ", ")}</dd>
-              <dt>Model ceny</dt>
-              <dd>{PRICE_MODELS[app.priceModel as keyof typeof PRICE_MODELS]?.label}</dd>
-              <dt>Taryfa</dt>
-              <dd>{app.tariff ?? "–"}</dd>
-              <dt>Roczne zużycie</dt>
-              <dd>{app.annualUsageMWh != null ? `${fmtNum(app.annualUsageMWh)} MWh` : "–"}</dd>
+              <dt>Warianty</dt>
+              <dd>{models.map((m) => PRICE_MODELS[m as keyof typeof PRICE_MODELS]?.label ?? m).join(" · ")}</dd>
+              {app.media !== "GAZ" && (
+                <>
+                  <dt>Prąd: taryfa / zużycie</dt>
+                  <dd>
+                    {app.tariff ?? "–"} / {app.annualUsageMWh != null ? `${fmtNum(app.annualUsageMWh)} MWh` : "–"}
+                  </dd>
+                </>
+              )}
+              {app.media !== "PRAD" && (
+                <>
+                  <dt>Gaz: taryfa / zużycie</dt>
+                  <dd>
+                    {app.tariffGas ?? "–"} / {app.annualUsageGasMWh != null ? `${fmtNum(app.annualUsageGasMWh)} MWh` : "–"}
+                  </dd>
+                </>
+              )}
             </dl>
             {!app.wantsCall ? (
               <form action={requestCall} style={{ marginTop: 16 }}>

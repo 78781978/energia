@@ -53,7 +53,7 @@ export async function SiteFooter() {
               <li><Link href="/o-nas/">O nas</Link></li>
               <li><Link href="/kontakt/">Kontakt</Link></li>
               <li><Link href="/portal/logowanie/">Logowanie do portalu</Link></li>
-              <li><Link href="/portal/rejestracja/">Załóż konto</Link></li>
+              <li><Link href="/portal/wniosek/">Załóż konto</Link></li>
             </ul>
             {(st.linkedin || st.facebook) && (
               <ul style={{ marginTop: 20 }}>

@@ -1,5 +1,5 @@
 import type { Company, MeteringPoint } from "@prisma/client";
-import type { CompanyDraft, PointDraft } from "@/app/portal/(panel)/wniosek/ApplicationWizard";
+import type { CompanyDraft, PointDraft } from "@/components/app/PointsEditor";
 
 export function companyDraft(c: Company | null, fallback: { email: string; name: string | null; phone: string | null }): CompanyDraft {
   return {
@@ -26,6 +26,8 @@ export function pointDrafts(points: MeteringPoint[]): PointDraft[] {
     key: p.id,
     id: p.id,
     medium: p.medium === "GAZ" ? "GAZ" : "PRAD",
+    name: p.name ?? "",
+    meterNumber: p.meterNumber ?? "",
     ppeNumber: p.ppeNumber ?? "",
     street: p.street ?? "",
     postalCode: p.postalCode ?? "",
@@ -36,5 +38,6 @@ export function pointDrafts(points: MeteringPoint[]): PointDraft[] {
     annualUsageMWh: p.annualUsageMWh != null ? String(p.annualUsageMWh) : "",
     contractedPowerKw: p.contractedPowerKw != null ? String(p.contractedPowerKw) : "",
     contractEndDate: p.contractEndDate ? p.contractEndDate.toISOString().slice(0, 10) : "",
+    noticeDays: p.noticeDays != null ? String(p.noticeDays) : "",
   }));
 }

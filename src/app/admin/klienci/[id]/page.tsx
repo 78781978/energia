@@ -61,8 +61,23 @@ export default async function ClientCard({ params }: { params: Promise<{ id: str
               <dd>{user.name ?? "–"}</dd>
               <dt>Telefon</dt>
               <dd>{user.phone ?? "–"}</dd>
-              <dt>Zgoda marketingowa</dt>
-              <dd>{user.marketingConsent ? "tak" : "nie"}</dd>
+              <dt>E-mail potwierdzony</dt>
+              <dd>{user.emailVerifiedAt ? fmtDateTime(user.emailVerifiedAt) : <span className="badge">nie</span>}</dd>
+              <dt>Logowanie dwuetapowe</dt>
+              <dd>{user.totpEnabledAt ? "włączone" : "wyłączone"}</dd>
+              <dt>Zgody</dt>
+              <dd>
+                e-mail: {user.marketingConsent ? "tak" : "nie"} · SMS: {user.smsConsent ? "tak" : "nie"} · newsletter: {user.newsletterConsent ? "tak" : "nie"}
+                {user.consentsUpdatedAt && <div className="muted small">zmiana {fmtDateTime(user.consentsUpdatedAt)}</div>}
+              </dd>
+              {user.deletionRequestedAt && (
+                <>
+                  <dt>RODO</dt>
+                  <dd>
+                    <span className="badge badge--warn">wniosek o usunięcie {fmtDateTime(user.deletionRequestedAt)}</span>
+                  </dd>
+                </>
+              )}
               <dt>Źródło</dt>
               <dd>{user.source ?? "–"}</dd>
               <dt>Status</dt>

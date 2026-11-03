@@ -42,7 +42,7 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
                 <Icon name="check" /> Nie obiecujemy oszczędności, których nie potrafimy wykazać
               </li>
             </ul>
-            <div className="grid" style={{ gap: 12, marginTop: 32 }}>
+            <div className="grid" id="biuro" style={{ gap: 12, marginTop: 32, scrollMarginTop: 100 }}>
               {st.phone && (
                 <a className="service-tile" href={`tel:${st.phone.replace(/\s/g, "")}`}>
                   <span>
@@ -71,6 +71,37 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
                 </div>
               )}
             </div>
+            {(st.legalName || st.nip || st.krs || st.address) && (
+              <div id="dane" className="card card--flat" style={{ marginTop: 24, scrollMarginTop: 100 }}>
+                <h2 style={{ fontSize: 18, marginTop: 0 }}>Dane adresowe</h2>
+                <dl className="dl">
+                  {st.legalName && (
+                    <>
+                      <dt>Firma</dt>
+                      <dd>{st.legalName}</dd>
+                    </>
+                  )}
+                  {st.address && (
+                    <>
+                      <dt>Adres</dt>
+                      <dd>{st.address}</dd>
+                    </>
+                  )}
+                  {st.nip && (
+                    <>
+                      <dt>NIP</dt>
+                      <dd>{st.nip}</dd>
+                    </>
+                  )}
+                  {st.krs && (
+                    <>
+                      <dt>KRS</dt>
+                      <dd>{st.krs}</dd>
+                    </>
+                  )}
+                </dl>
+              </div>
+            )}
           </div>
           <div className="card" style={{ padding: 40 }}>
             <LeadForm defaultType={typ} topic={topic} />
