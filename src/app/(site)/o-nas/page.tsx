@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Breadcrumbs, Dot, SectionHead } from "@/components/site/blocks";
 import { AdvisorSpotlight } from "@/components/site/AdvisorSpotlight";
+import { Banner } from "@/components/site/Banner";
 import { Icon } from "@/components/Icon";
 
 export const metadata: Metadata = {
@@ -60,6 +61,13 @@ export default function AboutPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="section--tight">
+        <div className="container">
+          <SectionHead center eyebrow="Nasze usługi" title={<Dot>Wszystko, w czym pomagamy firmom</Dot>} />
+          <Banner name="ilustracje" />
         </div>
       </section>
 

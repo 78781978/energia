@@ -2381,3 +2381,65 @@ p {
 details > summary.btn::-webkit-details-marker {
   display: none;
 }
+
+/* ---------- pełne grafiki (banery) – zawsze w całości, bez kadrowania ---------- */
+.banner {
+  margin: 0;
+}
+.banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  background: #fff;
+}
+.banner__link {
+  display: block;
+  border-radius: 24px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.banner__link:hover {
+  transform: translateY(-2px);
+}
+.banner__link:hover img {
+  box-shadow: var(--shadow-lg);
+}
+.banner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: var(--s3);
+}
+.banner-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s4);
+  align-items: start;
+}
+@media (max-width: 760px) {
+  .banner img,
+  .banner__link {
+    border-radius: 14px;
+  }
+  .banner-pair {
+    grid-template-columns: 1fr;
+  }
+}
+.hero--banner {
+  padding: var(--s4) 0 var(--s6);
+}
+.portal-module {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  gap: var(--s5);
+  align-items: center;
+  padding: clamp(24px, 4vw, 56px);
+}
+@media (max-width: 860px) {
+  .portal-module {
+    grid-template-columns: 1fr;
+  }
+}
