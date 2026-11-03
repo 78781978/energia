@@ -28,7 +28,7 @@ export function ClientUpload({ applicationId, signed = false }: { applicationId:
         </div>
       )}
       <label className="dropzone" style={{ padding: 20 }}>
-        <input type="file" name="file" accept={signed ? "application/pdf" : "application/pdf,image/jpeg,image/png"} required onChange={(e) => setName(e.target.files?.[0]?.name ?? null)} />
+        <input type="file" name="file" accept={signed ? "application/pdf" : "application/pdf,.xml,application/xml,text/xml,image/jpeg,image/png"} required onChange={(e) => setName(e.target.files?.[0]?.name ?? null)} />
         <Icon name="upload" size={26} />
         <strong>{name ?? (signed ? "Wybierz podpisaną umowę (PDF)" : "Wybierz plik")}</strong>
         <span className="hint">{signed ? "PDF do 10 MB" : "PDF, JPG lub PNG do 10 MB"}</span>

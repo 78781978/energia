@@ -16,13 +16,14 @@ npx prisma generate --schema dist/prisma/schema.prisma >/dev/null
 npx prisma migrate diff --from-empty --to-schema-datamodel dist/prisma/schema.prisma --script > "$OUT/init.sql"
 
 echo "▸ Budowanie aplikacji"
+rm -rf .next/standalone # bez pozostałości z poprzednich uruchomień (np. lokalnego .env)
 DATABASE_URL="postgresql://budowanie:x@localhost:5432/x" npx next build
 
 echo "▸ Składanie paczki"
 cp -r .next/standalone/. "$OUT/"
 mkdir -p "$OUT/.next" && cp -r .next/static "$OUT/.next/static"
-cp -r public "$OUT/public"
-cp deploy/start.js deploy/setup.js deploy/kopia.sh "$OUT/"
+rm -rf "$OUT/public" && cp -r public "$OUT/public"
+cp deploy/start.js deploy/setup.js deploy/kopia.sh deploy/cloudflare.js "$OUT/"
 # setup.js potrzebuje bcryptjs poza paczką Next.js
 mkdir -p "$OUT/node_modules" && cp -r node_modules/bcryptjs "$OUT/node_modules/"
 cp dist/prisma/schema.prisma "$OUT/schema.prisma"
@@ -40,6 +41,19 @@ SMTP_USER="powiadomienia@twoja-domena.pl"
 SMTP_PASSWORD=""
 MAIL_FROM="Energia w Biznesie <powiadomienia@twoja-domena.pl>"
 NOTIFY_EMAIL="biuro@twoja-domena.pl"
+# Captcha (Cloudflare Turnstile) – klucze tworzy node cloudflare.js
+TURNSTILE_SITE_KEY=""
+TURNSTILE_SECRET_KEY=""
+# Klucz zadań (przypomnienia) – losowy ciąg min. 32 znaki
+CRON_SECRET=""
+# 1 = ruch przez proxy Cloudflare
+BEHIND_CLOUDFLARE=""
+# 1 = aplikacja sama robi codzienną kopię (kopia.sh) – zalecane dodatkowo do zadania cron
+AUTO_KOPIA="1"
+KOPIE_DIR="/home/LOGIN/kopie"
+# Antywirus ClamAV (opcjonalnie, jeśli hosting udostępnia clamd): CLAMAV_HOST="127.0.0.1:3310" lub CLAMAV_SOCKET="/sciezka/clamd.sock"
+CLAMAV_HOST=""
+CLAMAV_REQUIRED=""
 ENV
 
 echo "▸ Przywracanie klienta bazy dla środowiska lokalnego (SQLite)"

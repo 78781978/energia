@@ -18,9 +18,26 @@ STAMP="$(date +%Y-%m-%d_%H%M)"
 umask 077
 mkdir -p "$KOPIE_DIR"
 
+# --jesli-potrzeba: tryb automatyczny z aplikacji – pomiń, jeśli dzisiejsza kopia już istnieje (młodsza niż 20 h)
+if [[ "${1:-}" == "--jesli-potrzeba" ]] && [[ -n "$(find "$KOPIE_DIR" -name 'baza_*.dump' -mmin -1200 2>/dev/null | head -1)" ]]; then
+  exit 0
+fi
+# blokada przed równoczesnym uruchomieniem (cron + aplikacja)
+exec 9>"$KOPIE_DIR/.kopia.lock"
+if command -v flock >/dev/null 2>&1 && ! flock -n 9; then
+  echo "kopia już trwa – pomijam"
+  exit 0
+fi
+
 # baza (format własny pg_dump – odtworzenie: pg_restore --clean -d "$DATABASE_URL" plik.dump)
 URL="${DATABASE_URL%%\?*}"
-pg_dump --format=custom --no-owner --file "$KOPIE_DIR/baza_$STAMP.dump" "$URL"
+if [[ "$URL" == file:* ]]; then
+  # SQLite (środowisko testowe) – kopia pliku bazy
+  DBF="${URL#file:}"; [[ "$DBF" = /* ]] || DBF="prisma/$DBF"
+  cp "$DBF" "$KOPIE_DIR/baza_$STAMP.dump"
+else
+  pg_dump --format=custom --no-owner --file "$KOPIE_DIR/baza_$STAMP.dump" "$URL"
+fi
 
 # pliki klientów (faktury, umowy, logo, obrazy z panelu)
 tar -czf "$KOPIE_DIR/pliki_$STAMP.tar.gz" -C "$(dirname "$STORAGE_DIR")" "$(basename "$STORAGE_DIR")"

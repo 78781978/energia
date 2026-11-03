@@ -35,6 +35,12 @@ async function once(userId: string, kind: string, refId: string): Promise<boolea
  */
 export async function GET(req: Request) {
   if (!authorized(req)) return new NextResponse("Brak dostępu", { status: 401 });
+  // wywołanie automatyczne (co godzinę) – tylko gdy od ostatniego przebiegu minęło ponad 20 godzin
+  if (new URL(req.url).searchParams.get("tylko-zalegle") === "1") {
+    const last = await db.setting.findUnique({ where: { key: "job:przypomnienia" } });
+    const at = last ? Date.parse((JSON.parse(last.value) as { at?: string }).at ?? "") : 0;
+    if (at && Date.now() - at < 20 * 3600e3) return NextResponse.json({ ok: true, skipped: true });
+  }
   const now = Date.now();
   const stats = { verify: 0, notice: 0, offer: 0, signature: 0 };
 
@@ -97,5 +103,7 @@ export async function GET(req: Request) {
     stats.signature++;
   }
 
+  const run = JSON.stringify({ at: new Date().toISOString(), sent: stats, by: new URL(req.url).searchParams.get("zrodlo") === "auto" ? "auto" : "cron" });
+  await db.setting.upsert({ where: { key: "job:przypomnienia" }, update: { value: run }, create: { key: "job:przypomnienia", value: run } });
   return NextResponse.json({ ok: true, sent: stats });
 }

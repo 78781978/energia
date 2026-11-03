@@ -117,9 +117,24 @@ W paczce jest skrypt `kopia.sh`: zapisuje bazę (`pg_dump`) i katalog plików kl
 bash /home/LOGIN/energia/kopia.sh >> /home/LOGIN/kopie/kopia.log 2>&1
 ```
 
+Jeśli w `.env` jest `AUTO_KOPIA=1`, aplikacja sama robi kopię raz na dobę – zadanie cron jest wtedy zabezpieczeniem na wypadek uśpienia aplikacji. Stan ostatniej kopii widać w panelu: **Stan bezpieczeństwa**.
+
 Raz w tygodniu pobierz najnowsze pliki z `~/kopie` poza hosting (np. na dysk w chmurze). Odtworzenie bazy: `pg_restore --clean --no-owner -d "ADRES_BAZY" baza_DATA.dump`. Przed startem raz przetestuj odtworzenie na pustej bazie.
 
 Każde przypomnienie jest wysyłane tylko raz, więc ponowne uruchomienie niczego nie dubluje.
+
+## 9. Cloudflare (automatycznie)
+
+1. Załóż konto na cloudflare.com, dodaj domenę (plan Free) i u rejestratora zmień serwery DNS na podane przez Cloudflare. Rekordy A domeny i `www` mają mieć włączone proxy (pomarańczowa chmurka).
+2. Utwórz token API (My Profile → API Tokens → Create Token → Custom token; uprawnienia opisane na początku pliku `cloudflare.js`; zakres tylko ta domena).
+3. Na serwerze lub swoim komputerze:
+
+```bash
+CF_API_TOKEN="TWOJ_TOKEN" node cloudflare.js twoja-domena.pl
+```
+
+4. Skrypt wypisze klucze Turnstile – wpisz je do `.env`, dodaj `BEHIND_CLOUDFLARE=1`, zrestartuj aplikację.
+5. Usuń token API w Cloudflare. Sprawdź panel → **Stan bezpieczeństwa**.
 
 ## Aktualizacja do nowej wersji
 

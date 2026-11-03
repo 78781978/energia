@@ -50,9 +50,18 @@ export function Confirm2faForm() {
             <span key={c}>{c}</span>
           ))}
         </div>
-        <div>
+        <div className="btn-row">
+          <a
+            className="btn btn--sm"
+            download="kody-zapasowe-energia-online.txt"
+            href={`data:text/plain;charset=utf-8,${encodeURIComponent(
+              `Kody zapasowe – Energia Online\nWygenerowane: ${new Date().toLocaleString("pl-PL")}\nKażdy kod działa jeden raz. Przechowuj je w menedżerze haseł, nie na komputerze.\n\n${(state.values?.codes ?? "").split(" ").join("\n")}\n`,
+            )}`}
+          >
+            Pobierz kody (.txt)
+          </a>
           <a className="btn btn--secondary btn--sm" href="">
-            Gotowe
+            Zapisałem kody – gotowe
           </a>
         </div>
       </div>
