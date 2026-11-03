@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/site/blocks";
 import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "Regulamin portalu Energia Online",
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
 const T = ({ children }: { children: React.ReactNode }) => <span className="todo">{children}</span>;
 
 /** SZABLON – wymaga przygotowania przez prawnika (zob. BRAKI.md). */
-export default function TermsPage() {
+export default async function TermsPage() {
+  const st = await getSiteSettings();
   return (
     <section className="page-hero">
       <div className="container prose legal" style={{ maxWidth: 820 }}>
@@ -22,7 +24,7 @@ export default function TermsPage() {
         </div>
         <h2>§1. Postanowienia ogólne</h2>
         <p>
-          Portal prowadzi {SITE.legalName ?? <T>[nazwa podmiotu]</T>}. Regulamin określa zasady zakładania konta, składania wniosków o ofertę
+          Portal prowadzi {st.legalName ?? <T>[nazwa podmiotu]</T>}. Regulamin określa zasady zakładania konta, składania wniosków o ofertę
           oraz obsługi dokumentów.
         </p>
         <h2>§2. Konto użytkownika</h2>

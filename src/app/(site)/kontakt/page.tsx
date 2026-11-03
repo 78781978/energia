@@ -3,6 +3,7 @@ import { Breadcrumbs } from "@/components/site/blocks";
 import { LeadForm } from "@/components/site/LeadForm";
 import { Icon } from "@/components/Icon";
 import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/cms";
 import { serviceName } from "@/lib/content";
 
 export const metadata: Metadata = {
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
 type SP = Promise<{ typ?: string; temat?: string; usluga?: string }>;
 
 export default async function ContactPage({ searchParams }: { searchParams: SP }) {
+  const st = await getSiteSettings();
   const sp = await searchParams;
   const typ = sp.typ === "rozmowa" ? "ROZMOWA" : sp.typ === "analiza" ? "ANALIZA" : "KONTAKT";
   const svc = sp.usluga ? serviceName(sp.usluga) : "";
@@ -28,7 +30,7 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
             <h1>
               Porozmawiajmy o energii w Twojej firmie<span className="dot">.</span>
             </h1>
-            <p className="lead">Opisz sytuację albo prześlij fakturę. Doradca odpowie w ciągu jednego dnia roboczego.</p>
+            <p className="lead">Opisz sytuację albo prześlij fakturę. Doradca odpowie {st.responseTime}.</p>
             <ul className="checklist" style={{ marginTop: 32 }}>
               <li>
                 <Icon name="check" /> Pierwsza analiza i rozmowa nie zobowiązują
@@ -41,29 +43,29 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
               </li>
             </ul>
             <div className="grid" style={{ gap: 12, marginTop: 32 }}>
-              {SITE.phone && (
-                <a className="service-tile" href={`tel:${SITE.phone.replace(/\s/g, "")}`}>
+              {st.phone && (
+                <a className="service-tile" href={`tel:${st.phone.replace(/\s/g, "")}`}>
                   <span>
-                    {SITE.phone}
-                    <small>{SITE.openingHours}</small>
+                    {st.phone}
+                    <small>{st.openingHours}</small>
                   </span>
                   <Icon name="phone" />
                 </a>
               )}
-              {SITE.email && (
-                <a className="service-tile" href={`mailto:${SITE.email}`}>
+              {st.email && (
+                <a className="service-tile" href={`mailto:${st.email}`}>
                   <span>
-                    {SITE.email}
+                    {st.email}
                     <small>Odpowiadamy w dni robocze</small>
                   </span>
                   <Icon name="mail" />
                 </a>
               )}
-              {SITE.address && (
+              {st.address && (
                 <div className="service-tile">
                   <span>
-                    {SITE.legalName ?? SITE.brand}
-                    <small>{SITE.address}</small>
+                    {st.legalName ?? SITE.brand}
+                    <small>{st.address}</small>
                   </span>
                   <Icon name="building" />
                 </div>

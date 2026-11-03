@@ -6,9 +6,9 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 
 | # | Czego brakuje | Gdzie się to pojawi | Co teraz jest w serwisie |
 |---|---|---|---|
-| 1 | **Dane firmy**: pełna nazwa podmiotu, NIP, KRS, adres siedziby, telefon, e-mail, godziny pracy, profile LinkedIn/Facebook | stopka, kontakt, polityka prywatności, dane strukturalne Google | pola są ukryte (uzupełnia się je w `src/lib/site.ts`) |
+| 1 | **Dane firmy**: pełna nazwa podmiotu, NIP, KRS, adres siedziby, telefon, e-mail, godziny pracy, profile LinkedIn/Facebook | stopka, kontakt, polityka prywatności, dane strukturalne Google | pola są ukryte – uzupełnisz je w panelu: **Dane firmy** |
 | 2 | **Polityka prywatności i regulamin portalu** przygotowane przez prawnika/IOD | `/polityka-prywatnosci/`, `/regulamin/` | szablony robocze z oznaczonymi miejscami do uzupełnienia (strony mają `noindex`) |
-| 3 | **Odpowiedzi do FAQ w kategorii 1** (prąd i gaz dla firm) – w plikach .docx skopiowały się same pytania, bez odpowiedzi (98 pytań na 7 podstronach) | FAQ na podstronach kategorii 1 | na każdej z 7 podstron widoczne są 3 pytania z odpowiedziami; pełna lista brakujących pytań: `content/import-report.json` |
+| 3 | **Odpowiedzi do FAQ w kategorii 1** (prąd i gaz dla firm) – w plikach .docx skopiowały się same pytania, bez odpowiedzi (98 pytań na 7 podstronach) | FAQ na podstronach kategorii 1 | na każdej z 7 podstron widoczne są 3 pytania z odpowiedziami; brakujące pytania (lista: `content/import-report.json`) można dopisać samodzielnie w panelu: **Treści strony → podstrona → Dodaj pytanie** |
 | 4 | **Konto pocztowe SMTP** (host, login, hasło, adres nadawcy) i adres do powiadomień zespołu | e-maile: rejestracja, potwierdzenie wniosku, zmiany statusów, reset hasła, zapytania | bez SMTP wiadomości trafiają tylko do logu serwera |
 | 5 | **Hosting i domena** oraz produkcyjna baza danych (zalecany PostgreSQL) i miejsce na pliki klientów z kopią zapasową | – | lokalnie działa SQLite + katalog `storage/` |
 | 6 | **Potwierdzenie obietnicy „odpowiadamy w ciągu jednego dnia roboczego”** – księga znaku zaleca nie obiecywać tego, czego nie dowozimy | formularze kontaktowe, e-mail do klienta | tekst jest użyty – zmień, jeśli SLA jest inne |

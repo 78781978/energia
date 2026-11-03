@@ -72,3 +72,16 @@ export function passwordProblem(pw: string): string | null {
   if (!/[a-ząćęłńóśźż]/i.test(pw) || !/\d/.test(pw)) return "Hasło musi zawierać litery i cyfry.";
   return null;
 }
+
+/** „Prąd dla firm – 2027!” → „prad-dla-firm-2027” */
+export function slugify(text: string): string {
+  const map: Record<string, string> = { ą: "a", ć: "c", ę: "e", ł: "l", ń: "n", ó: "o", ś: "s", ź: "z", ż: "z" };
+  return text
+    .toLowerCase()
+    .replace(/[ąćęłńóśźż]/g, (c) => map[c] ?? c)
+    .normalize("NFKD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 80);
+}

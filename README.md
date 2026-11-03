@@ -25,6 +25,13 @@ Serwis doradczy (76 podstron usług w 10 kategoriach) oraz portal klienta i pane
 - karta wniosku: pełne dane, edycja danych firmy i PPE, zmiana statusu z powiadomieniem klienta, historia statusów, **log zmian** (kto, kiedy, co zmienił), notatki wewnętrzne, komunikaty do klienta, upload/pobieranie PDF, widoczność dokumentów dla klienta, przypisywanie ofert,
 - klienci (baza kont, firm i PPE), oferty i cenniki PDF, zapytania z formularzy, analityka (źródła wejścia, lejek formularza i miejsca porzucenia), newsletter z eksportem, zespół (konta administratorów).
 
+**Edycja treści (CMS w panelu administratora)**
+- **Treści strony** – teksty 10 kategorii i 76 podstron usług: nagłówki, treść (edytor z paskiem narzędzi i podglądem), przyciski, FAQ, meta title/description; „Przywróć oryginał” cofa wszystkie zmiany podstrony,
+- **Aktualności** – wpisy na blogu (szkic / publikacja / publikacja zaplanowana), zdjęcie główne, SEO; lista na `/aktualnosci/` i sekcja na stronie głównej,
+- **Banery i grafiki** – podmiana obrazu, tekstu alternatywnego i linku, ukrywanie banera,
+- **Dane firmy** – nazwa, NIP, KRS, adres, telefon, e-mail, godziny pracy, czas odpowiedzi, LinkedIn/Facebook.
+Zmiany są widoczne od razu po zapisaniu (strony odświeżane automatycznie), każda zmiana trafia do logu zmian. Obrazy z panelu zapisują się w `STORAGE_DIR/media` – katalog trzeba objąć kopią zapasową.
+
 Statusy: Wniosek utworzony → W trakcie weryfikacji → Oczekuje na podpis → Podpisana → Wysłana do operatora → Aktywowana (oraz Odrzucona).
 
 ## Uruchomienie lokalne
