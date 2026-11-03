@@ -44,6 +44,8 @@ export type PointDraft = {
   contractEndDate: string;
 };
 
+// Ilustracje kroków (te same co na stronie „Jak to działa”)
+const STEP_ART = ["/img/kroki/krok-1.jpg", "/img/kroki/krok-2.jpg", "/img/kroki/krok-3.jpg", "/img/kroki/krok-4.jpg", "/img/kroki/krok-5.jpg", "/img/kroki/krok-6.jpg", "/img/kroki/krok-7.jpg"];
 const STEPS = ["Media", "Lata zakupu", "Model ceny", "Taryfa i zużycie", "Faktura", "Firma i punkty poboru", "Podsumowanie"];
 // Do którego kroku należy pole zwrócone przez serwer
 const FIELD_STEP: Record<string, number> = { media: 0, years: 1, priceModel: 2, tariff: 3, annualUsageMWh: 3, invoice: 4 };
@@ -190,6 +192,9 @@ export function ApplicationWizard({ company, points: initialPoints, years: yearO
       </p>
 
       <form action={action} noValidate className="panel" style={{ padding: 32 }}>
+        <div className="wizard__art" aria-hidden="true">
+          <img src={STEP_ART[step]} alt="" width={1312} height={1199} />
+        </div>
         {c.id && <input type="hidden" name="companyId" value={c.id} />}
         <input type="hidden" name="points" value={pointsJson} />
 
