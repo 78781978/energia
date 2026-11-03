@@ -52,6 +52,10 @@ W katalogu aplikacji skopiuj `.env.example` jako `.env` i uzupełnij:
 | `NOTIFY_EMAIL` | adres, na który przychodzą nowe wnioski i zapytania |
 | `TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY` | (zalecane) klucze Cloudflare Turnstile – ochrona rejestracji przed botami; darmowe konto na dash.cloudflare.com → Turnstile → Add site (domena) |
 | `CRON_SECRET` | długi losowy ciąg (min. 32 znaki) – klucz do przypomnień e-mail (krok 7) |
+| `BEHIND_CLOUDFLARE` | `1`, jeśli domena działa przez proxy Cloudflare (pomarańczowa chmurka) – limity prób liczą wtedy prawdziwy IP klienta |
+| `ADMIN_2FA_REQUIRED` | zostaw puste – w produkcji logowanie dwuetapowe administratorów jest obowiązkowe |
+
+Po zapisaniu ustaw uprawnienia pliku, aby czytał go tylko właściciel konta: `chmod 600 ~/energia/.env`.
 
 Te same zmienne można zamiast tego wpisać w ustawieniach aplikacji Node.js w panelu (krok 4). Wartości z panelu mają pierwszeństwo przed plikiem `.env`.
 
@@ -83,6 +87,8 @@ Wynik powinien zawierać „Utworzono tabele” i „Utworzono administratora”
 
 Następnie usuń `ADMIN_PASSWORD` z `.env` i **zrestartuj aplikację** (przycisk Restart w panelu).
 
+**Pierwsze logowanie administratora:** po zalogowaniu panel od razu poprosi o włączenie logowania dwuetapowego (kod QR do aplikacji Google/Microsoft Authenticator). Zapisz 8 kodów zapasowych w menedżerze haseł. Bez 2FA panel administratora jest zablokowany. Tak samo każdy nowy członek zespołu dodany w zakładce „Zespół”.
+
 ## 6. SSL i sprawdzenie
 
 1. DirectAdmin → **SSL Certificates** → Let's Encrypt dla domeny (i `www`).
@@ -98,8 +104,20 @@ Portal wysyła przypomnienia (niepotwierdzony e-mail, termin wypowiedzenia umowy
 DirectAdmin → **Advanced Features → Cron Jobs** (Zadania cron) → dodaj zadanie: minuta `15`, godzina `7`, pozostałe pola `*`, polecenie:
 
 ```bash
-curl -fsS "https://twoja-domena.pl/api/cron/przypomnienia/?klucz=TWOJ_CRON_SECRET" > /dev/null
+curl -fsS -H "Authorization: Bearer TWOJ_CRON_SECRET" https://twoja-domena.pl/api/cron/przypomnienia/ > /dev/null
 ```
+
+(Klucz w nagłówku, a nie w adresie – nie trafia wtedy do logów serwera.)
+
+## 8. Kopie zapasowe (harmonogram zadań)
+
+W paczce jest skrypt `kopia.sh`: zapisuje bazę (`pg_dump`) i katalog plików klientów do `~/kopie`, usuwa kopie starsze niż 14 dni. Dodaj drugie zadanie cron (codziennie, np. 2:30):
+
+```bash
+bash /home/LOGIN/energia/kopia.sh >> /home/LOGIN/kopie/kopia.log 2>&1
+```
+
+Raz w tygodniu pobierz najnowsze pliki z `~/kopie` poza hosting (np. na dysk w chmurze). Odtworzenie bazy: `pg_restore --clean --no-owner -d "ADRES_BAZY" baza_DATA.dump`. Przed startem raz przetestuj odtworzenie na pustej bazie.
 
 Każde przypomnienie jest wysyłane tylko raz, więc ponowne uruchomienie niczego nie dubluje.
 

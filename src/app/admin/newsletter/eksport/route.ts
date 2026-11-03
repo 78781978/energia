@@ -1,10 +1,10 @@
-import { getCurrentUser } from "@/lib/auth";
+import { adminOrNull } from "@/lib/auth";
 import { db } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const user = await getCurrentUser();
+  const user = await adminOrNull();
   if (!user || user.role !== "ADMIN") return new Response("Brak dostępu", { status: 403 });
   const [subs, users] = await Promise.all([
     db.newsletterSubscriber.findMany({ where: { unsubscribedAt: null }, orderBy: { createdAt: "asc" } }),

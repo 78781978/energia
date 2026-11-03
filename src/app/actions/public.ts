@@ -16,7 +16,7 @@ export async function subscribeNewsletter(_prev: FormState, fd: FormData): Promi
   if (str(fd.get("website"))) return { ok: true, message: "Dziękujemy!" }; // pułapka na boty
   if (!isValidEmail(email)) return { error: "Wpisz poprawny adres e-mail.", values: { email } };
   if (!fd.get("consent")) return { error: "Zaznacz zgodę na otrzymywanie newslettera.", values: { email } };
-  if (!rateLimit(`nl:${await clientIp()}`, 10)) return { error: "Zbyt wiele prób. Spróbuj ponownie później." };
+  if (!await rateLimit(`nl:${await clientIp()}`, 10)) return { error: "Zbyt wiele prób. Spróbuj ponownie później." };
   const existing = await db.newsletterSubscriber.findUnique({ where: { email } });
   if (existing && !existing.unsubscribedAt) return { ok: true, message: "Ten adres jest już zapisany. Dziękujemy!" };
   if (existing) {
@@ -59,7 +59,7 @@ export async function submitLead(_prev: FormState, fd: FormData): Promise<FormSt
   const hasFile = file instanceof File && file.size > 0;
   if (type === "ANALIZA" && !hasFile && !values.message) fe.file = "Dołącz fakturę lub opisz, czego dotyczy analiza.";
   if (Object.keys(fe).length) return { error: "Popraw zaznaczone pola.", fieldErrors: fe, values };
-  if (!rateLimit(`lead:${await clientIp()}`, 6, 30 * 60 * 1000)) return { error: "Wysłano już kilka zapytań. Spróbuj ponownie za kilkanaście minut.", values };
+  if (!await rateLimit(`lead:${await clientIp()}`, 6, 30 * 60 * 1000)) return { error: "Wysłano już kilka zapytań. Spróbuj ponownie za kilkanaście minut.", values };
 
   let documentId: string | null = null;
   if (hasFile) {
@@ -105,6 +105,6 @@ export async function submitLead(_prev: FormState, fd: FormData): Promise<FormSt
 /** Zdarzenia lejka formularza wniosku (bez danych osobowych). */
 export async function trackFunnel(visitorId: string, step: number): Promise<void> {
   if (!/^[a-z0-9-]{8,64}$/i.test(visitorId) || !Number.isInteger(step) || step < 1 || step > 20) return;
-  if (!rateLimit(`funnel:${visitorId}`, 60, 60 * 60 * 1000)) return;
+  if (!await rateLimit(`funnel:${visitorId}`, 60, 60 * 60 * 1000)) return;
   await db.funnelEvent.create({ data: { visitorId, funnel: "wniosek", step, source: await readAttribution() } });
 }

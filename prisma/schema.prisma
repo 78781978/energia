@@ -76,6 +76,15 @@ model EmailToken {
   @@index([userId])
 }
 
+// Limity prób (logowanie, rejestracja, formularze) – w bazie, aby działały między restartami i procesami serwera
+model RateLimit {
+  key   String   @id
+  count Int
+  until DateTime
+
+  @@index([until])
+}
+
 // Wysłane przypomnienia (aby nie wysyłać ich wielokrotnie)
 model ReminderSent {
   id        String   @id @default(cuid())

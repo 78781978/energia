@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
-import { clientIp, hashPassword, hashToken, rateLimit, requireClient, verifyPassword } from "@/lib/auth";
+import { clientIp, hashPassword, hashToken, rateLimit, requireClient, requireUser, SESSION_COOKIE, verifyPassword } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { audit } from "@/lib/applications";
 import { notifyTeam, sendMail } from "@/lib/mail";
@@ -18,15 +18,15 @@ import { SITE } from "@/lib/site";
 export async function resendVerification(): Promise<void> {
   const user = await requireClient();
   if (user.emailVerifiedAt) return;
-  if (!rateLimit(`verify:${user.id}`, 3, 60 * 60e3)) return;
+  if (!await rateLimit(`verify:${user.id}`, 3, 60 * 60e3)) return;
   await sendVerification(user.id, user.email);
 }
 
 /* ------------------------------------------------------------ hasło */
 
 export async function changePassword(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireClient();
-  if (!rateLimit(`pw:${user.id}`, 6, 15 * 60e3)) return { error: "Zbyt wiele prób. Spróbuj ponownie za 15 minut." };
+  const user = await requireUser();
+  if (!await rateLimit(`pw:${user.id}`, 6, 15 * 60e3)) return { error: "Zbyt wiele prób. Spróbuj ponownie za 15 minut." };
   const me = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   const current = String(fd.get("current") ?? "");
   const pw = String(fd.get("password") ?? "");
@@ -34,7 +34,7 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
   const pp = passwordProblem(pw);
   if (pp) return { error: pp, fieldErrors: { password: pp } };
   if (pw !== String(fd.get("password2") ?? "")) return { error: "Hasła nie są takie same.", fieldErrors: { password2: "Hasła nie są takie same." } };
-  const token = (await cookies()).get("eo_session")?.value;
+  const token = (await cookies()).get(SESSION_COOKIE)?.value;
   await db.$transaction([
     db.user.update({ where: { id: user.id }, data: { passwordHash: await hashPassword(pw) } }),
     // wyloguj pozostałe urządzenia
@@ -48,18 +48,19 @@ export async function changePassword(_prev: FormState, fd: FormData): Promise<Fo
 /* ------------------------------------------------------------ logowanie dwuetapowe */
 
 export async function begin2fa(): Promise<void> {
-  const user = await requireClient();
+  const user = await requireUser();
   const me = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   if (me.totpEnabledAt) return;
   await db.user.update({ where: { id: user.id }, data: { totpSecret: newTotpSecret() } });
   revalidatePath("/portal/konto/");
+  revalidatePath("/admin/konto/");
 }
 
 export async function confirm2fa(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireClient();
+  const user = await requireUser();
   const me = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   if (!me.totpSecret || me.totpEnabledAt) return { error: "Rozpocznij konfigurację ponownie." };
-  if (!rateLimit(`2fa-setup:${user.id}`, 10, 15 * 60e3)) return { error: "Zbyt wiele prób. Spróbuj za kilka minut." };
+  if (!await rateLimit(`2fa-setup:${user.id}`, 10, 15 * 60e3)) return { error: "Zbyt wiele prób. Spróbuj za kilka minut." };
   if (!verifyTotp(me.totpSecret, str(fd.get("code"), 10))) return { error: "Kod jest nieprawidłowy. Sprawdź, czy czas w telefonie jest ustawiony automatycznie.", fieldErrors: { code: "Nieprawidłowy kod." } };
   const codes = newBackupCodes();
   await db.user.update({
@@ -72,13 +73,16 @@ export async function confirm2fa(_prev: FormState, fd: FormData): Promise<FormSt
 }
 
 export async function disable2fa(_prev: FormState, fd: FormData): Promise<FormState> {
-  const user = await requireClient();
+  const user = await requireUser();
   const me = await db.user.findUniqueOrThrow({ where: { id: user.id } });
   if (!(await verifyPassword(String(fd.get("password") ?? ""), me.passwordHash))) return { error: "Nieprawidłowe hasło.", fieldErrors: { password: "Nieprawidłowe hasło." } };
+  if (user.role === "ADMIN" && (await import("@/lib/auth")).adminTwoFactorRequired())
+    return { error: "Dla administratorów logowanie dwuetapowe jest obowiązkowe – nie można go wyłączyć." };
   await db.user.update({ where: { id: user.id }, data: { totpEnabledAt: null, totpSecret: null, backupCodes: null } });
   await audit(user.id, "User", user.id, "2fa_disabled");
   await sendMail({ to: user.email, subject: "Wyłączono logowanie dwuetapowe", text: `Logowanie dwuetapowe w portalu ${SITE.portalBrand} zostało wyłączone. Jeśli to nie Ty, zmień hasło i skontaktuj się z nami.` });
   revalidatePath("/portal/konto/");
+  revalidatePath("/admin/konto/");
   return { ok: true, message: "Logowanie dwuetapowe zostało wyłączone." };
 }
 
@@ -157,7 +161,7 @@ export async function portalEnquiry(_prev: FormState, fd: FormData): Promise<For
   const topic = str(fd.get("topic"), 200);
   const message = str(fd.get("message"), 4000);
   if (message.length < 5 && !topic) return { error: "Opisz krótko, w czym możemy pomóc.", fieldErrors: { message: "Opisz potrzebę." } };
-  if (!rateLimit(`enq:${user.id}`, 6, 30 * 60e3)) return { error: "Wysłano już kilka zapytań. Spróbuj za chwilę." };
+  if (!await rateLimit(`enq:${user.id}`, 6, 30 * 60e3)) return { error: "Wysłano już kilka zapytań. Spróbuj za chwilę." };
   const company = await db.company.findFirst({ where: { ownerId: user.id }, orderBy: { updatedAt: "desc" } });
   const lead = await db.lead.create({
     data: {

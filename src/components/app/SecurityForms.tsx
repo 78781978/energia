@@ -51,7 +51,7 @@ export function Confirm2faForm() {
           ))}
         </div>
         <div>
-          <a className="btn btn--secondary btn--sm" href="/portal/konto/">
+          <a className="btn btn--secondary btn--sm" href="">
             Gotowe
           </a>
         </div>

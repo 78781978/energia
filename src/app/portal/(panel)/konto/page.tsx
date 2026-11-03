@@ -1,24 +1,18 @@
-import QRCode from "qrcode";
 import { requireClient } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { otpauthUrl } from "@/lib/totp";
 import { mediaUrl } from "@/lib/storage";
 import { meterRows } from "@/lib/meters";
-import { begin2fa } from "@/app/actions/account";
 import { PageHead, fmtDate, fmtDateTime } from "@/components/app/ui";
-import { SubmitButton } from "@/components/forms";
 import { Icon } from "@/components/Icon";
 import { AccountForm } from "./AccountForm";
-import { AvatarForm, Confirm2faForm, ConsentsForm, DeletionForm, Disable2faForm, PasswordForm } from "./SecurityForms";
+import { AvatarForm, ConsentsForm, DeletionForm, PasswordForm } from "@/components/app/SecurityForms";
+import { TwoFactorPanel } from "@/components/app/TwoFactorPanel";
 
 export const metadata = { title: "Ustawienia konta" };
 
 export default async function AccountPage() {
   const user = await requireClient();
   const me = await db.user.findUniqueOrThrow({ where: { id: user.id } });
-  const pending2fa = me.totpSecret && !me.totpEnabledAt;
-  const qr = pending2fa ? await QRCode.toDataURL(otpauthUrl(me.totpSecret!, me.email), { margin: 1, width: 360 }) : null;
-  const backupLeft = me.backupCodes ? (JSON.parse(me.backupCodes) as string[]).length : 0;
   const deadlines = (await meterRows(user.id))
     .flatMap((r) => [
       r.noticeDate ? { date: r.noticeDate, label: `Termin wypowiedzenia – ${r.name || r.ppeNumber || "licznik"}` } : null,
@@ -48,43 +42,7 @@ export default async function AccountPage() {
           <PasswordForm />
         </section>
 
-        <section className="panel" aria-labelledby="bezpieczenstwo">
-          <div className="panel__head">
-            <h2 id="bezpieczenstwo">Bezpieczeństwo – logowanie dwuetapowe</h2>
-            {me.totpEnabledAt ? <span className="badge badge--ok">Włączone</span> : <span className="badge">Wyłączone</span>}
-          </div>
-          <p className="muted" style={{ marginTop: 0 }}>
-            Po włączeniu przy logowaniu podasz dodatkowo 6-cyfrowy kod z aplikacji w telefonie (Google Authenticator, Microsoft Authenticator, Authy).
-          </p>
-          {me.totpEnabledAt ? (
-            <>
-              <p className="small">
-                Włączone {fmtDateTime(me.totpEnabledAt)} · pozostałe kody zapasowe: {backupLeft}
-              </p>
-              <Disable2faForm />
-            </>
-          ) : pending2fa && qr ? (
-            <div className="qr-box">
-              <img src={qr} alt="Kod QR do aplikacji uwierzytelniającej" width={180} height={180} />
-              <div className="stack" style={{ gap: 8, flex: "1 1 280px" }}>
-                <ol style={{ margin: 0, paddingLeft: 20 }}>
-                  <li>Zeskanuj kod QR w aplikacji uwierzytelniającej.</li>
-                  <li>
-                    Albo wpisz klucz ręcznie: <code style={{ wordBreak: "break-all" }}>{me.totpSecret!.replace(/(.{4})/g, "$1 ").trim()}</code>
-                  </li>
-                  <li>Wpisz kod wyświetlony w aplikacji.</li>
-                </ol>
-                <Confirm2faForm />
-              </div>
-            </div>
-          ) : (
-            <form action={begin2fa}>
-              <SubmitButton className="btn" arrow={false} pending="Przygotowuję…">
-                <Icon name="lock" size={18} /> Skonfiguruj logowanie dwuetapowe
-              </SubmitButton>
-            </form>
-          )}
-        </section>
+        <TwoFactorPanel user={me} />
 
         <section className="panel" aria-labelledby="zgody">
           <div className="panel__head">

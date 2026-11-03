@@ -72,7 +72,7 @@ export async function submitWizard(_prev: FormState, fd: FormData): Promise<Form
   if (!current) {
     const human = await verifyHuman(fd, ip, 8);
     if (human) return { error: human, fieldErrors: { captcha: human } };
-    if (!rateLimit(`register:${ip}`, 5, 60 * 60 * 1000)) return { error: "Zbyt wiele prób rejestracji. Spróbuj ponownie później." };
+    if (!await rateLimit(`register:${ip}`, 5, 60 * 60 * 1000)) return { error: "Zbyt wiele prób rejestracji. Spróbuj ponownie później." };
     const email = company.contactEmail!;
     const exists = await db.user.findUnique({ where: { email } });
     if (exists)

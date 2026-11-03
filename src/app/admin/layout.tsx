@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 export const metadata: Metadata = { title: { default: "Panel administratora", template: "%s | Admin Energia Online" }, robots: { index: false, follow: false } };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-  const admin = await requireAdmin();
+  const admin = await requireAdmin({ allowWithout2fa: true });
   const [newApps, newLeads] = await Promise.all([
     db.application.count({ where: { status: "WNIOSEK_UTWORZONY" } }),
     db.lead.count({ where: { status: "NOWE" } }),
@@ -27,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/analityka/", label: "Analityka", icon: "chart" },
         { href: "/admin/newsletter/", label: "Newsletter", icon: "mail" },
         { href: "/admin/zespol/", label: "Zespół", icon: "users" },
+        { href: "/admin/konto/", label: "Moje konto", icon: "lock" },
       ]}
     >
       {children}
