@@ -2926,3 +2926,18 @@ details > summary.btn::-webkit-details-marker {
     font-size: 30px;
   }
 }
+
+/* pasek etapów bez nazw (wytyczna Miro: „nie umieszczamy nazwy etapów”) */
+.progress-steps--bare li {
+  position: relative;
+  font-size: 0;
+}
+.progress-steps--bare li::before {
+  margin-bottom: 0;
+}
+.progress-steps--bare .progress-steps__link {
+  position: absolute;
+  inset: -8px 0;
+  cursor: pointer;
+  text-decoration: none;
+}
