@@ -3,10 +3,14 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { HelpWidget } from "@/components/site/HelpWidget";
 import { CookieBar } from "@/components/site/CookieBar";
 import { CATEGORIES } from "@/lib/content";
-import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/cms";
 import { JsonLd, organizationLd } from "@/components/site/JsonLd";
 
-export default function SiteLayout({ children }: { children: React.ReactNode }) {
+// Odświeżanie stron po zmianach w panelu (Treści) – najpóźniej co 5 minut, a po zapisie od razu.
+export const revalidate = 300;
+
+export default async function SiteLayout({ children }: { children: React.ReactNode }) {
+  const st = await getSiteSettings();
   const nav = CATEGORIES.map(({ slug, name, icon, services }) => ({ slug, name, icon, services }));
   return (
     <>
@@ -16,9 +20,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <SiteHeader categories={nav} />
       <main id="tresc">{children}</main>
       <SiteFooter />
-      <HelpWidget phone={SITE.phone} />
+      <HelpWidget phone={st.phone} />
       <CookieBar />
-      <JsonLd data={organizationLd()} />
+      <JsonLd data={organizationLd(st)} />
     </>
   );
 }

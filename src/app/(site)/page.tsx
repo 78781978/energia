@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CATEGORIES, featuredFaq } from "@/lib/content";
+import { featuredFaq } from "@/lib/content";
+import { getCategoryCards, listPublishedPosts } from "@/lib/cms";
 import { Dot, FaqList, SectionHead } from "@/components/site/blocks";
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { AdvisorSpotlight } from "@/components/site/AdvisorSpotlight";
 import { Banner } from "@/components/site/Banner";
+import { PostCard } from "@/components/site/PostCard";
 import { JsonLd, faqLd } from "@/components/site/JsonLd";
 import { Icon } from "@/components/Icon";
 import { SITE } from "@/lib/site";
@@ -15,8 +17,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
 };
 
-export default function HomePage() {
+export default async function HomePage() {
   const faq = featuredFaq(6);
+  const [cards, posts] = await Promise.all([getCategoryCards(), listPublishedPosts(3)]);
   return (
     <>
       {/* 1. Baner główny – w całości, jak w projekcie */}
@@ -52,7 +55,7 @@ export default function HomePage() {
             />
           </div>
           <div className="grid grid-4" style={{ gap: 20 }}>
-            {CATEGORIES.map((c) => (
+            {cards.map((c) => (
               <Link key={c.slug} href={`/${c.slug}/`} className="cat-card">
                 <div className="cat-card__img">
                   <img src={c.image} alt="" loading="lazy" width={128} height={185} />
@@ -189,6 +192,25 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Aktualności – widoczne, gdy w panelu są opublikowane wpisy */}
+      {posts.length > 0 && (
+        <section className="section" aria-labelledby="aktualnosci">
+          <div className="container">
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24, flexWrap: "wrap" }}>
+              <SectionHead id="aktualnosci" eyebrow="Aktualności" title={<Dot>Z rynku energii</Dot>} />
+              <Link className="link-arrow" href="/aktualnosci/" style={{ marginBottom: 48 }}>
+                Wszystkie wpisy <Icon name="arrowRight" size={18} />
+              </Link>
+            </div>
+            <div className="grid grid-3">
+              {posts.map((p) => (
+                <PostCard key={p.id} post={p} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* 8. FAQ */}
       {faq.length > 0 && (

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { CATEGORIES } from "@/lib/content";
 import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/cms";
 import { NewsletterForm } from "./NewsletterForm";
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const st = await getSiteSettings();
   const year = new Date().getFullYear();
   return (
     <footer className="site-footer">
@@ -47,25 +49,32 @@ export function SiteFooter() {
             <h3>Firma</h3>
             <ul>
               <li><Link href="/jak-to-dziala/">Jak to działa</Link></li>
+              <li><Link href="/aktualnosci/">Aktualności</Link></li>
               <li><Link href="/o-nas/">O nas</Link></li>
               <li><Link href="/kontakt/">Kontakt</Link></li>
               <li><Link href="/portal/logowanie/">Logowanie do portalu</Link></li>
               <li><Link href="/portal/rejestracja/">Załóż konto</Link></li>
             </ul>
-            {(SITE.phone || SITE.email || SITE.address) && (
+            {(st.linkedin || st.facebook) && (
               <ul style={{ marginTop: 20 }}>
-                {SITE.phone && <li><a href={`tel:${SITE.phone.replace(/\s/g, "")}`}>{SITE.phone}</a></li>}
-                {SITE.email && <li><a href={`mailto:${SITE.email}`}>{SITE.email}</a></li>}
-                {SITE.address && <li>{SITE.address}</li>}
+                {st.linkedin && <li><a href={st.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a></li>}
+                {st.facebook && <li><a href={st.facebook} target="_blank" rel="noopener noreferrer">Facebook</a></li>}
+              </ul>
+            )}
+            {(st.phone || st.email || st.address) && (
+              <ul style={{ marginTop: 20 }}>
+                {st.phone && <li><a href={`tel:${st.phone.replace(/\s/g, "")}`}>{st.phone}</a></li>}
+                {st.email && <li><a href={`mailto:${st.email}`}>{st.email}</a></li>}
+                {st.address && <li>{st.address}</li>}
               </ul>
             )}
           </div>
         </div>
         <div className="footer-bottom">
           <span>
-            © {year} {SITE.legalName ?? SITE.brand}
-            {SITE.nip ? ` · NIP ${SITE.nip}` : ""}
-            {SITE.krs ? ` · KRS ${SITE.krs}` : ""}
+            © {year} {st.legalName ?? SITE.brand}
+            {st.nip ? ` · NIP ${st.nip}` : ""}
+            {st.krs ? ` · KRS ${st.krs}` : ""}
           </span>
           <span style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Link href="/polityka-prywatnosci/">Polityka prywatności</Link>

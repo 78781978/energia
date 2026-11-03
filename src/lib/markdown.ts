@@ -3,6 +3,20 @@ import { Marked } from "marked";
 const md = new Marked({ gfm: true, breaks: false });
 
 // Linki zewnętrzne otwieramy bezpiecznie; tabele owijamy, by przewijały się na telefonie.
+// Surowy HTML w treści (np. wklejony z innej strony) jest wyświetlany jako tekst – bezpieczeństwo strony publicznej.
+md.use({
+  renderer: {
+    html({ text }) {
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    },
+  },
+});
+// Linki zewnętrzne otwieramy w nowej karcie; adresy typu javascript: są blokowane.
+md.use({
+  walkTokens(token) {
+    if ((token.type === "link" || token.type === "image") && /^\s*(javascript|data|vbscript):/i.test(token.href)) token.href = "#";
+  },
+});
 md.use({
   hooks: {
     postprocess(html: string) {
@@ -25,7 +39,7 @@ export type Block =
 /** Dzieli treść podstrony na bloki tekstu i bloki z przyciskami ({{callout|…}} / {{cta|…}}). */
 export function toBlocks(body: string): Block[] {
   const blocks: Block[] = [];
-  const lines = body.split("\n");
+  const lines = body.replace(/\r\n?/g, "\n").split("\n");
   let buf: string[] = [];
   let cur: { callout: string | null; ctas: string[] } | null = null;
   const flushText = () => {

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Breadcrumbs } from "@/components/site/blocks";
 import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/cms";
 
 export const metadata: Metadata = {
   title: "Polityka prywatności",
@@ -13,7 +14,8 @@ const T = ({ children }: { children: React.ReactNode }) => <span className="todo
 /**
  * SZABLON – wymaga weryfikacji i uzupełnienia przez prawnika/IOD (zob. BRAKI.md).
  */
-export default function PrivacyPage() {
+export default async function PrivacyPage() {
+  const st = await getSiteSettings();
   return (
     <section className="page-hero">
       <div className="container prose legal" style={{ maxWidth: 820 }}>
@@ -24,8 +26,8 @@ export default function PrivacyPage() {
         </div>
         <h2>1. Administrator danych</h2>
         <p>
-          Administratorem danych osobowych jest {SITE.legalName ?? <T>[pełna nazwa podmiotu]</T>}, {SITE.address ?? <T>[adres siedziby]</T>}, NIP{" "}
-          {SITE.nip ?? <T>[NIP]</T>}. Kontakt w sprawach danych osobowych: {SITE.email ?? <T>[adres e-mail]</T>}.
+          Administratorem danych osobowych jest {st.legalName ?? <T>[pełna nazwa podmiotu]</T>}, {st.address ?? <T>[adres siedziby]</T>}, NIP{" "}
+          {st.nip ?? <T>[NIP]</T>}. Kontakt w sprawach danych osobowych: {st.email ?? <T>[adres e-mail]</T>}.
         </p>
         <h2>2. Cele i podstawy przetwarzania</h2>
         <ul>

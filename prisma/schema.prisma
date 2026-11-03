@@ -299,3 +299,57 @@ model FunnelEvent {
 
   @@index([funnel, step])
 }
+
+// ---------------------------------------------------------------- treści (CMS)
+
+// Zmienione treści podstron usług i kategorii (nadpisują teksty z content/services.json)
+model PageContent {
+  slug        String   @id
+  kind        String   // SERVICE | CATEGORY
+  data        String   // JSON z polami treści
+  updatedById String?
+  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now())
+}
+
+// Ustawienia serwisu: dane firmy, banery (JSON)
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
+// Aktualności / blog
+model Post {
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  title           String
+  excerpt         String?
+  body            String
+  coverId         String?
+  cover           Media?    @relation(fields: [coverId], references: [id], onDelete: SetNull)
+  status          String    @default("DRAFT") // DRAFT | PUBLISHED
+  publishedAt     DateTime?
+  metaTitle       String?
+  metaDescription String?
+  authorId        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status, publishedAt])
+}
+
+// Obrazy wgrane przez administratora (publiczne – banery, aktualności)
+model Media {
+  id         String   @id @default(cuid())
+  fileName   String
+  storedName String   @unique
+  mimeType   String
+  size       Int
+  width      Int?
+  height     Int?
+  alt        String?
+  createdAt  DateTime @default(now())
+
+  posts Post[]
+}

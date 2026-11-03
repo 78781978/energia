@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CATEGORIES, categoryOf, getCategory, getService, type Category, type ServicePage } from "@/lib/content";
+import { CATEGORIES, categoryOf, type ServicePage } from "@/lib/content";
+import { getCategoryPage, getServicePage, getSiteSettings, type CategoryContent } from "@/lib/cms";
+import type { Category } from "@/lib/content";
 import { Breadcrumbs, CtaButtons, FaqList, PortalModule, RichBody } from "@/components/site/blocks";
 import { JsonLd, faqLd, serviceLd } from "@/components/site/JsonLd";
 import { LeadForm } from "@/components/site/LeadForm";
@@ -11,7 +13,10 @@ import { ctaLabel, ctaTarget } from "@/lib/cta";
 import { plain } from "@/lib/markdown";
 import { SITE } from "@/lib/site";
 
-export const dynamicParams = false;
+// true: strony mogą być odświeżane po zmianach w panelu (nieznane adresy i tak dostają 404 przez notFound())
+export const dynamicParams = true;
+// Strony są generowane statycznie i odświeżane po zmianach w panelu (Treści) – najpóźniej co 5 minut.
+export const revalidate = 300;
 
 export function generateStaticParams() {
   return [...CATEGORIES.map((c) => ({ slug: c.slug })), ...CATEGORIES.flatMap((c) => c.services.map((s) => ({ slug: s.slug })))];
@@ -24,17 +29,18 @@ function titleFor(meta: string | null, fallback: string): Metadata["title"] {
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const cat = getCategory(slug);
-  if (cat) {
-    const description = cat.parent.metaDescription ?? (plain(cat.parent.lead ?? cat.short) + " " + cat.short).slice(0, 160);
+  const cp = await getCategoryPage(slug);
+  if (cp) {
+    const c = cp.content;
+    const description = c.metaDescription ?? (plain(c.lead ?? c.short) + " " + c.short).slice(0, 160);
     return {
-      title: titleFor(cat.parent.metaTitle, cat.parent.h1 ?? cat.name),
+      title: titleFor(c.metaTitle, c.h1),
       description,
-      alternates: { canonical: `/${cat.slug}/` },
-      openGraph: { title: cat.parent.h1 ?? cat.name, description, images: [cat.image], url: `/${cat.slug}/` },
+      alternates: { canonical: `/${cp.slug}/` },
+      openGraph: { title: c.h1, description, images: [cp.image], url: `/${cp.slug}/` },
     };
   }
-  const page = getService(slug);
+  const page = await getServicePage(slug);
   if (!page) return {};
   const description = page.metaDescription ?? plain(page.lead ?? page.h1);
   return {
@@ -48,16 +54,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const cat = getCategory(slug);
-  if (cat) return <CategoryView cat={cat} />;
-  const page = getService(slug);
-  if (page) return <ServiceView page={page} />;
+  const cp = await getCategoryPage(slug);
+  if (cp) return <CategoryView cat={cp} content={cp.content} />;
+  const page = await getServicePage(slug);
+  if (page) return <ServiceView page={page} responseTime={(await getSiteSettings()).responseTime} />;
   notFound();
 }
 
 /* ------------------------------------------------------------------ usługa */
 
-function ServiceView({ page }: { page: ServicePage }) {
+function ServiceView({ page, responseTime }: { page: ServicePage; responseTime: string }) {
   const cat = categoryOf(page);
   const navName = cat.services.find((s) => s.slug === page.slug)?.name ?? page.name;
   const heroCtas = page.ctas.length ? page.ctas : ["UMÓW ROZMOWĘ Z DORADCĄ"];
@@ -108,7 +114,7 @@ function ServiceView({ page }: { page: ServicePage }) {
           <aside className="article-aside" aria-label="Kontakt i powiązane usługi">
             <div className="card" style={{ background: "var(--cream)", boxShadow: "none" }}>
               <h2 style={{ fontSize: 20 }}>{leadType === "ANALIZA" ? "Prześlij fakturę do analizy" : "Porozmawiaj z doradcą"}</h2>
-              <p className="muted small">Odpowiemy w ciągu jednego dnia roboczego. Pierwsza konsultacja nie zobowiązuje.</p>
+              <p className="muted small">Odpowiemy {responseTime}. Pierwsza konsultacja nie zobowiązuje.</p>
               <LeadForm compact showTypes={false} defaultType={leadType} topic={navName} />
             </div>
             <div className="card card--flat card--pad-sm">
@@ -152,11 +158,11 @@ function ServiceView({ page }: { page: ServicePage }) {
 /** Grafiki z materiałów przypisane do kategorii – pokazywane w całości. */
 const CATEGORY_BANNER: Partial<Record<number, BannerKey>> = { 1: "rozwiazania", 7: "spoldzielnie", 9: "doradca" };
 
-function CategoryView({ cat }: { cat: Category }) {
-  const p = cat.parent;
+async function CategoryView({ cat, content: p }: { cat: Category; content: CategoryContent }) {
   const heroCtas = p.ctas.length ? p.ctas : ["UMÓW ROZMOWĘ Z DORADCĄ"];
-  const faq = cat.services
-    .map((s) => getService(s.slug)?.faq[0])
+  const services = await Promise.all(cat.services.map((s) => getServicePage(s.slug)));
+  const faq = services
+    .map((s) => s?.faq[0])
     .filter((f): f is NonNullable<typeof f> => !!f)
     .slice(0, 6);
   return (
@@ -167,7 +173,7 @@ function CategoryView({ cat }: { cat: Category }) {
           <div className="page-hero__grid">
             <div>
               <span className="eyebrow">Usługi dla firm</span>
-              <h1>{p.h1 ?? cat.name}</h1>
+              <h1>{p.h1}</h1>
               {p.lead && <p className="lead">{p.lead}</p>}
               <CtaButtons ctas={heroCtas} slug={cat.slug} max={2} size="btn--lg" />
             </div>
@@ -192,8 +198,8 @@ function CategoryView({ cat }: { cat: Category }) {
               <RichBody body={p.body.replace(/\{\{(cta|callout)\|[^}]+\}\}\n?/g, "")} slug={cat.slug} />
             </div>
             <div className="grid" style={{ gap: 12 }}>
-              {cat.services.map((s) => {
-                const sp = getService(s.slug);
+              {cat.services.map((s, i) => {
+                const sp = services[i];
                 return (
                   <Link key={s.slug} href={`/${s.slug}/`} className="service-tile">
                     <span>

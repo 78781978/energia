@@ -108,6 +108,7 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
           </div>
           <Link href="/jak-to-dziala/" aria-current={cur("/jak-to-dziala/")}>Jak to działa</Link>
           <Link href="/energia-360/" aria-current={cur("/energia-360/")}>Energia 360</Link>
+          <Link href="/aktualnosci/" aria-current={cur("/aktualnosci/")}>Aktualności</Link>
           <Link href="/o-nas/" aria-current={cur("/o-nas/")}>O nas</Link>
           <Link href="/kontakt/" aria-current={cur("/kontakt/")}>Kontakt</Link>
         </nav>
@@ -157,6 +158,7 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
             </details>
           ))}
           <Link href="/jak-to-dziala/">Jak to działa</Link>
+          <Link href="/aktualnosci/">Aktualności</Link>
           <Link href="/o-nas/">O nas</Link>
           <Link href="/kontakt/">Kontakt</Link>
           <div className="mobile-nav__actions">
