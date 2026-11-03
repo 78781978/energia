@@ -5,6 +5,7 @@ import { CATEGORIES, categoryOf, getCategory, getService, type Category, type Se
 import { Breadcrumbs, CtaButtons, FaqList, PortalModule, RichBody } from "@/components/site/blocks";
 import { JsonLd, faqLd, serviceLd } from "@/components/site/JsonLd";
 import { LeadForm } from "@/components/site/LeadForm";
+import { Banner, type BannerKey } from "@/components/site/Banner";
 import { Icon } from "@/components/Icon";
 import { ctaLabel, ctaTarget } from "@/lib/cta";
 import { plain } from "@/lib/markdown";
@@ -148,6 +149,9 @@ function ServiceView({ page }: { page: ServicePage }) {
 
 /* ---------------------------------------------------------------- kategoria */
 
+/** Grafiki z materiałów przypisane do kategorii – pokazywane w całości. */
+const CATEGORY_BANNER: Partial<Record<number, BannerKey>> = { 1: "rozwiazania", 7: "spoldzielnie", 9: "doradca" };
+
 function CategoryView({ cat }: { cat: Category }) {
   const p = cat.parent;
   const heroCtas = p.ctas.length ? p.ctas : ["UMÓW ROZMOWĘ Z DORADCĄ"];
@@ -171,6 +175,11 @@ function CategoryView({ cat }: { cat: Category }) {
               <img src={cat.image} alt="" width={300} height={340} />
             </div>
           </div>
+          {CATEGORY_BANNER[cat.id] && (
+            <div style={{ marginTop: 48, maxWidth: CATEGORY_BANNER[cat.id] === "doradca" ? 640 : undefined, marginInline: "auto" }}>
+              <Banner name={CATEGORY_BANNER[cat.id]!} />
+            </div>
+          )}
         </div>
       </section>
 

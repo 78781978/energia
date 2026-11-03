@@ -4,6 +4,7 @@ import { ctaLabel, ctaTarget } from "@/lib/cta";
 import { renderMarkdown, toBlocks } from "@/lib/markdown";
 import type { Faq } from "@/lib/content";
 import { JsonLd, breadcrumbLd } from "./JsonLd";
+import { Banner } from "./Banner";
 
 export function CtaButtons({ ctas, slug, max = 3, size = "" }: { ctas: string[]; slug?: string; max?: number; size?: string }) {
   const seen = new Set<string>();
@@ -79,8 +80,8 @@ export function PortalModule({ title, body, ctas, slug }: { title: string | null
   return (
     <section className="section--tight" aria-labelledby="portal-module">
       <div className="container">
-        <div className="feature-banner" style={{ minHeight: 0 }}>
-          <div className="feature-banner__text">
+        <div className="card portal-module">
+          <div>
             <span className="eyebrow">Portal Energia Online</span>
             <h2 id="portal-module" style={{ fontSize: "clamp(26px,3vw,36px)" }}>
               {title ?? "Kupuj energię online"}
@@ -90,9 +91,8 @@ export function PortalModule({ title, body, ctas, slug }: { title: string | null
               <CtaButtons ctas={ctas.length ? ctas : ["PORÓWNAJ OFERTY ONLINE"]} slug={slug} />
             </div>
           </div>
-          <div className="feature-banner__media">
-            <img src="/img/hero/kierunek.jpg" alt="Czerwona droga prowadząca przez znak e w stronę miasta – nowy kierunek dla biznesu" loading="lazy" />
-          </div>
+          {/* Grafika w całości, bez kadrowania */}
+          <Banner name="kierunek" href="/portal/rejestracja/" label="Wejdź na portal Energia Online" />
         </div>
       </div>
     </section>
