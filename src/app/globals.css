@@ -1693,78 +1693,79 @@ p {
   }
 }
 
-/* doradca – ujęcie inspirowane portretem z notatkami */
+/* doradca – ujęcie inspirowane portretem z notatkami.
+   Notatki nigdy nie nachodzą na grafikę: obok ilustracji w szerokiej kolumnie, pod nią w wąskiej. */
 .advisor {
-  position: relative;
   background: #eef0f2;
   border-radius: 32px;
-  min-height: 560px;
-  overflow: hidden;
+  padding: 32px 24px;
+  container-type: inline-size;
+}
+.advisor__grid {
   display: grid;
-  place-items: end center;
+  gap: 16px 20px;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "name name"
+    "photo photo"
+    "n1 n2"
+    "n3 n4";
+  align-items: center;
 }
 .advisor__photo {
-  position: relative;
-  z-index: 1;
-  width: min(360px, 70%);
-  aspect-ratio: 3 / 4;
-  display: grid;
-  place-items: center;
-  align-self: center;
+  grid-area: photo;
+  justify-self: center;
+  width: min(340px, 100%);
+  background: #fff;
+  border-radius: 24px;
+  padding: 16px;
+  box-shadow: 0 10px 30px rgba(35, 38, 41, 0.08);
 }
 .advisor__photo img {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.advisor__placeholder {
-  width: 100%;
-  height: 100%;
-  border-radius: 24px;
-  border: 2px dashed #b9bdc2;
-  display: grid;
-  place-items: center;
-  text-align: center;
-  color: var(--muted);
-  font-size: 14px;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.5);
+  height: auto;
+  border-radius: 16px;
 }
 .advisor__note {
-  position: absolute;
-  z-index: 2;
   font-family: "Caveat", "Segoe Print", "Bradley Hand", cursive;
-  font-size: 25px;
-  line-height: 1.25;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
   color: var(--graphite);
-  max-width: 180px;
-  transform: rotate(var(--rot, -3deg));
+  transform: rotate(var(--rot, -2deg));
 }
 .advisor__note b {
   color: var(--red-btn);
   font-weight: 700;
 }
 .advisor__note--name {
+  grid-area: name;
+  justify-self: center;
   font-size: 40px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+  --rot: -2deg;
 }
-@media (max-width: 700px) {
-  .advisor {
-    min-height: 0;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
+.advisor__note--1 { grid-area: n1; }
+.advisor__note--2 { grid-area: n2; }
+.advisor__note--3 { grid-area: n3; }
+.advisor__note--4 { grid-area: n4; }
+/* szeroka kolumna: notatki po obu stronach ilustracji */
+@container (min-width: 640px) {
+  .advisor__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 300px) minmax(0, 1fr);
+    grid-template-areas:
+      "name name name"
+      "n1 photo n2"
+      "n3 photo n4";
   }
-  .advisor__note {
-    position: static;
-    transform: none;
-    max-width: none;
-  }
-  .advisor__photo {
-    width: 100%;
-  }
+  .advisor__note--1,
+  .advisor__note--3 { text-align: right; }
+}
+@media (max-width: 420px) {
+  .advisor__grid { grid-template-columns: 1fr; grid-template-areas: "name" "photo" "n1" "n2" "n3" "n4"; }
+  .advisor__note { font-size: 22px; }
 }
 
 /* ---------- uwierzytelnianie ---------- */
