@@ -35,6 +35,8 @@ mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY
 postgresql://UZYTKOWNIK:HASLO@localhost:5432/NAZWA_BAZY?schema=public
 ```
 
+**Liczba połączeń z bazą:** aplikacja używa najwyżej **5 połączeń na proces** (ustawienie `DB_POOL` w `.env`). Hosting zwykle uruchamia 1–2 procesy Node.js, więc łącznie to **5–10 połączeń**, plus 1 na chwilę przy `setup.js` lub kopii zapasowej. Jeśli limit użytkownika bazy w pakiecie (max_user_connections) jest niższy, ustaw `DB_POOL` na mniej, np. `3`. Przy obecnym ruchu wystarczają 2–3 połączenia.
+
 Jeśli hasło zawiera znaki specjalne (`@ : / ? # "`), zakoduj je w adresie (np. `@` → `%40`, `#` → `%23`, `"` → `%22`) albo ustaw hasło z samych liter i cyfr.
 
 ## 2. Wgranie plików
