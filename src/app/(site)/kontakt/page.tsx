@@ -24,7 +24,7 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
     <section className="page-hero" style={{ paddingBottom: 112 }}>
       <div className="container">
         <Breadcrumbs items={[{ name: "Kontakt", path: "/kontakt/" }]} />
-        <div className="article-layout" style={{ gridTemplateColumns: "minmax(0,0.9fr) minmax(0,1.1fr)", alignItems: "start" }}>
+        <div className="article-layout article-layout--contact">
           <div>
             <span className="eyebrow">Kontakt</span>
             <h1>

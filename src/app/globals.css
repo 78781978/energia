@@ -542,6 +542,9 @@ p {
 .nav-toggle {
   display: none;
 }
+.header-cta-mobile {
+  display: none;
+}
 .nav-item {
   position: static;
 }
@@ -622,7 +625,13 @@ p {
   }
   .nav-toggle {
     display: inline-flex;
+    margin-left: 8px;
+  }
+  /* telefon/tablet: „Porównaj oferty” zawsze widoczne w pasku (prowadzi do kreatora, etapy 1–7) */
+  .header-cta-mobile {
+    display: inline-flex;
     margin-left: auto;
+    white-space: nowrap;
   }
   .main-nav,
   .header-actions--desktop {
@@ -850,8 +859,21 @@ p {
   display: grid;
   gap: var(--s3);
 }
+.article-layout--half {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.article-layout--contact {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+}
+/* elementy siatek nie mogą rozpychać kolumny szerzej niż ekran */
+.grid > *,
+.article-layout > * {
+  min-width: 0;
+}
 @media (max-width: 1000px) {
-  .article-layout {
+  .article-layout,
+  .article-layout--half,
+  .article-layout--contact {
     grid-template-columns: 1fr;
   }
   .article-aside {
@@ -1500,6 +1522,7 @@ p {
   border: 0;
   padding: 0;
   margin: 0;
+  min-width: 0; /* fieldset domyślnie nie zwęża się poniżej treści – na telefonie poszerzał stronę */
   display: grid;
   gap: 12px;
 }
@@ -1797,7 +1820,8 @@ p {
 .advisor__note--name {
   grid-area: name;
   justify-self: center;
-  font-size: 40px;
+  font-size: clamp(26px, 10cqi, 40px);
+  white-space: nowrap;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   --rot: -2deg;
@@ -2996,4 +3020,48 @@ details > summary.btn::-webkit-details-marker {
   inset: -8px 0;
   cursor: pointer;
   text-decoration: none;
+}
+
+/* telefon: logo + „Porównaj oferty” + menu w jednym rzędzie bez wychodzenia poza ekran */
+@media (max-width: 560px) {
+  .site-header__inner {
+    gap: 10px;
+    height: 72px;
+  }
+  .site-logo img {
+    height: 36px;
+  }
+  .header-cta-mobile {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+  .nav-toggle {
+    margin-left: 0;
+    min-width: 44px;
+    padding: 8px 10px;
+  }
+}
+@media (max-width: 374px) {
+  .site-header__inner {
+    gap: 8px;
+  }
+  .site-logo img {
+    height: 26px;
+  }
+  .header-cta-mobile {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+  .nav-toggle {
+    min-width: 40px;
+    padding: 8px;
+  }
+}
+/* bardzo wąskie ekrany: długie napisy na przyciskach łamią się zamiast wychodzić poza ekran */
+@media (max-width: 400px) {
+  .btn--lg {
+    white-space: normal;
+    text-align: center;
+  }
 }

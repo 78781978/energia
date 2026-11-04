@@ -191,7 +191,7 @@ async function CategoryView({ cat, content: p }: { cat: Category; content: Categ
 
       <section className="section section--white" style={{ paddingTop: 72 }}>
         <div className="container">
-          <div className="article-layout" style={{ gridTemplateColumns: "minmax(0,1fr) minmax(0,1fr)" }}>
+          <div className="article-layout article-layout--half">
             <div>
               <span className="eyebrow">Zakres usług</span>
               <h2>{cat.services.length} obszarów, w których pomagamy</h2>

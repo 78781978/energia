@@ -124,6 +124,11 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
           )}
         </div>
 
+        {!loggedIn && (
+          <Link href="/portal/wniosek/" className="btn btn--sm header-cta-mobile">
+            Porównaj oferty
+          </Link>
+        )}
         <button
           type="button"
           className="btn btn--ghost btn--sm nav-toggle"
