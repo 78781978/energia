@@ -10,7 +10,7 @@ Do pokazania strony i portalu innym osobom przed wdrożeniem na cyber_Folks. **T
 3. Zanim klikniesz Deploy – albo zaraz po pierwszym (nieudanym) wdrożeniu – dodaj bazę:
    projekt → **Storage → Create Database → Neon (Postgres)** → plan Free → połącz z projektem.
    Vercel sam doda zmienne `DATABASE_URL` i `DATABASE_URL_UNPOOLED`.
-4. Gałąź: projekt → **Settings → Git → Production Branch** → `claude/brave-volta-d9clby` (albo gałąź, na której jest kod).
+4. Gałąź: projekt → **Settings → Git → Production Branch** → `vie/brave-volta-d9clby` (albo gałąź, na której jest kod).
 
 ## 2. Zmienne środowiskowe
 
