@@ -1,0 +1,16 @@
+{
+  // Podgląd całego serwisu w GitHub Codespaces (Code → Codespaces → Create codespace).
+  // Przy pierwszym uruchomieniu: instalacja, baza SQLite z danymi demo; potem serwer startuje sam na porcie 3000.
+  "name": "Energia – podgląd",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "hostRequirements": { "cpus": 2, "memory": "4gb" },
+  "postCreateCommand": "bash .devcontainer/przygotuj.sh",
+  "postAttachCommand": "npm run dev",
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "Strona i portal", "onAutoForward": "openBrowser" }
+  },
+  "customizations": {
+    "codespaces": { "openFiles": ["README.md"] }
+  }
+}
