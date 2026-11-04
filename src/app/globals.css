@@ -1312,6 +1312,42 @@ p {
   font-size: 13px;
   color: #a5a9ad;
 }
+/* „Projekt i wykonanie: VERO STUDIO” – smuga światła przechodząca przez napis */
+.site-footer a.vero-shine {
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  color: #d5d7da;
+  background: linear-gradient(110deg, #9ea3a8 0%, #9ea3a8 38%, #ffffff 46%, #ffb3ad 50%, #ffffff 54%, #9ea3a8 62%, #9ea3a8 100%);
+  background-size: 250% 100%;
+  filter: drop-shadow(0 0 0 transparent);
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: vero-shine 3.2s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+.site-footer a.vero-shine:hover,
+.site-footer a.vero-shine:focus-visible {
+  -webkit-text-fill-color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@keyframes vero-shine {
+  0% {
+    background-position: 100% 0;
+  }
+  45%,
+  100% {
+    background-position: 0% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-footer a.vero-shine {
+    animation: none;
+    -webkit-text-fill-color: #d5d7da;
+  }
+}
 @media (max-width: 900px) {
   .footer-grid {
     grid-template-columns: 1fr 1fr;

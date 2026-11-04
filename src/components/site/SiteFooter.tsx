@@ -75,6 +75,12 @@ export async function SiteFooter() {
             © {year} {st.legalName ?? SITE.brand}
             {st.nip ? ` · NIP ${st.nip}` : ""}
             {st.krs ? ` · KRS ${st.krs}` : ""}
+            <span className="footer-credit">
+              {" · "}Projekt i wykonanie:{" "}
+              <a href="https://www.facebook.com/profile.php?id=61591915780293" target="_blank" rel="noopener noreferrer" className="vero-shine" aria-label="VERO STUDIO – projekt i wykonanie strony (Facebook, otwiera się w nowej karcie)">
+                VERO STUDIO
+              </a>
+            </span>
           </span>
           <span style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
             <Link href="/polityka-prywatnosci/">Polityka prywatności</Link>
