@@ -73,7 +73,7 @@ Klient demo: `klient.demo@example.com` / `KlientDemo2026`.
 ## Wdrożenie produkcyjne
 
 1. Ustaw zmienne środowiskowe z `.env.example` (zwłaszcza `SITE_URL`, `DATABASE_URL`, `STORAGE_DIR`, dane SMTP, `NOTIFY_EMAIL`).
-2. Baza: **PostgreSQL**. Skrypt `scripts/paczka-hosting.sh` sam przełącza schemat na PostgreSQL, generuje `init.sql` i składa gotową paczkę (`dist/energia-hosting.zip`) ze skryptami `start.js` i `setup.js`. Szczegóły: [WDROZENIE-CYBERFOLKS.md](./WDROZENIE-CYBERFOLKS.md).
+2. Baza: **MariaDB 10.6+ / MySQL 8** albo **PostgreSQL**. Skrypt `scripts/paczka-hosting.sh` sam przełącza schemat (dla MariaDB: `BAZA=mariadb`, pola tekstowe jako TEXT/MEDIUMTEXT, utf8mb4), generuje `init.sql` i składa paczkę (`dist/energia-hosting-mariadb.zip` lub `dist/energia-hosting.zip`) ze skryptami `start.js`, `setup.js` i `kopia.sh`. Szczegóły: [WDROZENIE-CYBERFOLKS.md](./WDROZENIE-CYBERFOLKS.md).
 3. `STORAGE_DIR` musi wskazywać trwały katalog poza `public/`, objęty kopią zapasową (faktury i umowy klientów). Przy hostingu bez trwałego dysku podmień `src/lib/storage.ts` na zapis do S3 lub podobnej usługi.
 4. Uruchom:
 

@@ -1,6 +1,6 @@
 // Model danych portalu Energia Online.
-// Lokalnie: SQLite. Produkcyjnie zalecany PostgreSQL – wystarczy zmienić `provider`
-// na "postgresql" i ustawić DATABASE_URL (zob. README).
+// Lokalnie: SQLite. Produkcyjnie MariaDB/MySQL lub PostgreSQL – schemat przełącza scripts/paczka-hosting.sh
+// (BAZA=mariadb → scripts/schema-mysql.mjs), zob. README.
 // Wartości statusów i ról są przechowywane jako tekst – listy dozwolonych
 // wartości znajdują się w src/lib/constants.ts.
 

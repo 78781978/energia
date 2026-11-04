@@ -1,35 +1,41 @@
 # Wdrożenie na hostingu cyber_Folks
 
-Instrukcja uruchomienia serwisu i portalu na hostingu cyber_Folks (panel DirectAdmin, aplikacja Node.js, baza PostgreSQL).
+Instrukcja uruchomienia serwisu i portalu na hostingu cyber_Folks (panel DirectAdmin, aplikacja Node.js, baza **MariaDB/MySQL** albo **PostgreSQL**).
 
-> Nazwy przycisków w panelu mogą się nieznacznie różnić w zależności od wersji DirectAdmin i pakietu. Jeśli czegoś nie widać, zapytaj pomoc cyber_Folks (czat), czy pakiet ma włączone **aplikacje Node.js** i **bazy PostgreSQL**. Tego wymaga portal.
+> Nazwy przycisków w panelu mogą się nieznacznie różnić w zależności od wersji DirectAdmin i pakietu. Jeśli czegoś nie widać, zapytaj pomoc cyber_Folks (czat), czy pakiet ma włączone **aplikacje Node.js**. Bazę wybierz tę, którą daje pakiet – portal działa z obiema.
 
 ## 0. Czego potrzebujesz
 
-- pakiet hostingowy cyber_Folks z obsługą **Node.js (wersja 20 lub 22)** i **PostgreSQL**,
+- pakiet hostingowy cyber_Folks z obsługą **Node.js (wersja 20 lub 22)** oraz bazą **MariaDB 10.6+ / MySQL 8** (standard w DirectAdmin) albo **PostgreSQL**,
 - domenę podpiętą do hostingu (np. `energiawbiznesie.pl`),
 - skrzynkę e-mail na tej domenie do wysyłki powiadomień (np. `powiadomienia@…`),
 - dostęp **SSH** (zalecany; da się też bez niego, opis w kroku 5),
-- plik `energia-hosting.zip`.
+- paczkę dla wybranej bazy: **`energia-hosting-mariadb.zip`** (MariaDB/MySQL) albo **`energia-hosting.zip`** (PostgreSQL). Paczki różnią się tylko sterownikiem bazy – nie da się ich zamienić po wgraniu.
 
-### Skąd wziąć `energia-hosting.zip`
+Rozmiar: paczka ok. **71 MB**, po rozpakowaniu ok. **190 MB** (ok. 3100 plików). Zostaw zapas na dokumenty klientów i kopie zapasowe – na start min. **2 GB** wolnego miejsca.
 
-- **Najprościej, przez GitHub:** w repozytorium otwórz zakładkę **Actions → „Paczka na hosting” → Run workflow**. Po kilku minutach pobierz plik z sekcji **Artifacts** na dole strony przebiegu.
-- **Albo lokalnie** (Node.js 20+): `npm ci && bash scripts/paczka-hosting.sh` → `dist/energia-hosting.zip`.
+### Skąd wziąć paczkę
+
+- **Najprościej, przez GitHub:** w repozytorium otwórz zakładkę **Actions → „Paczka na hosting” → Run workflow**. Po kilku minutach pobierz plik z sekcji **Artifacts** na dole strony przebiegu (są obie wersje).
+- **Albo lokalnie** (Node.js 20+): `npm ci && BAZA=mariadb bash scripts/paczka-hosting.sh` → `dist/energia-hosting-mariadb.zip` (bez `BAZA=mariadb` – wersja PostgreSQL).
 
 Aplikacja jest już zbudowana w paczce. Na serwerze **nie trzeba** uruchamiać `npm install` ani `npm run build`.
 
-## 1. Baza danych PostgreSQL
+## 1. Baza danych
 
-DirectAdmin → **Bazy danych PostgreSQL** (PostgreSQL Management) → utwórz bazę i użytkownika. Zapisz:
-- nazwę bazy, nazwę użytkownika, hasło,
-- host (zwykle `localhost`) i port (zwykle `5432`).
+**MariaDB / MySQL** (paczka `energia-hosting-mariadb.zip`): DirectAdmin → **MySQL Management** → **Create new Database**. Panel utworzy bazę i użytkownika (zwykle z prefiksem `LOGIN_`). Zapisz nazwę bazy, użytkownika i hasło; host to zwykle `localhost`, port `3306`. Kodowanie bazy: **utf8mb4** (domyślne – tabele i tak tworzą się w utf8mb4).
 
-Adres połączenia ma postać:
+```
+mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY
+```
+
+**PostgreSQL** (paczka `energia-hosting.zip`): DirectAdmin → **PostgreSQL Management** → utwórz bazę i użytkownika; port zwykle `5432`.
+
 ```
 postgresql://UZYTKOWNIK:HASLO@localhost:5432/NAZWA_BAZY?schema=public
 ```
-Jeśli hasło zawiera znaki specjalne (`@ : / ? #`), zakoduj je (np. `@` → `%40`) albo ustaw hasło z samych liter i cyfr.
+
+Jeśli hasło zawiera znaki specjalne (`@ : / ? # "`), zakoduj je w adresie (np. `@` → `%40`, `#` → `%23`, `"` → `%22`) albo ustaw hasło z samych liter i cyfr.
 
 ## 2. Wgranie plików
 
@@ -111,7 +117,7 @@ curl -fsS -H "Authorization: Bearer TWOJ_CRON_SECRET" https://twoja-domena.pl/ap
 
 ## 8. Kopie zapasowe (harmonogram zadań)
 
-W paczce jest skrypt `kopia.sh`: zapisuje bazę (`pg_dump`) i katalog plików klientów do `~/kopie`, usuwa kopie starsze niż 14 dni. Dodaj drugie zadanie cron (codziennie, np. 2:30):
+W paczce jest skrypt `kopia.sh`: zapisuje bazę (`mariadb-dump` dla MariaDB/MySQL, `pg_dump` dla PostgreSQL) i katalog plików klientów do `~/kopie`, usuwa kopie starsze niż 14 dni. Dodaj drugie zadanie cron (codziennie, np. 2:30):
 
 ```bash
 bash /home/LOGIN/energia/kopia.sh >> /home/LOGIN/kopie/kopia.log 2>&1
@@ -119,7 +125,7 @@ bash /home/LOGIN/energia/kopia.sh >> /home/LOGIN/kopie/kopia.log 2>&1
 
 Jeśli w `.env` jest `AUTO_KOPIA=1`, aplikacja sama robi kopię raz na dobę – zadanie cron jest wtedy zabezpieczeniem na wypadek uśpienia aplikacji. Stan ostatniej kopii widać w panelu: **Stan bezpieczeństwa**.
 
-Raz w tygodniu pobierz najnowsze pliki z `~/kopie` poza hosting (np. na dysk w chmurze). Odtworzenie bazy: `pg_restore --clean --no-owner -d "ADRES_BAZY" baza_DATA.dump`. Przed startem raz przetestuj odtworzenie na pustej bazie.
+Raz w tygodniu pobierz najnowsze pliki z `~/kopie` poza hosting (np. na dysk w chmurze). Odtworzenie bazy: MariaDB – `gunzip < baza_DATA.sql.gz | mariadb -u UZYTKOWNIK -p NAZWA_BAZY`; PostgreSQL – `pg_restore --clean --no-owner -d "ADRES_BAZY" baza_DATA.dump`. Przed startem raz przetestuj odtworzenie na pustej bazie.
 
 Każde przypomnienie jest wysyłane tylko raz, więc ponowne uruchomienie niczego nie dubluje.
 

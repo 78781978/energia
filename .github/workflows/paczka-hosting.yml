@@ -25,8 +25,14 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
       - run: npx tsc --noEmit
       - run: bash scripts/paczka-hosting.sh
+      - run: BAZA=mariadb bash scripts/paczka-hosting.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: energia-hosting
+          name: energia-hosting-postgresql
           path: dist/energia-hosting.zip
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: energia-hosting-mariadb
+          path: dist/energia-hosting-mariadb.zip
           retention-days: 30

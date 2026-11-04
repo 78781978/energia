@@ -2,22 +2,33 @@
 # Buduje gotową paczkę do wgrania na hosting Node.js (np. cyber_Folks).
 # Wynik: dist/energia-hosting.zip (serwer + pliki statyczne + init.sql + setup.js + start.js)
 #
-#   bash scripts/paczka-hosting.sh            # baza PostgreSQL (zalecane)
+#   bash scripts/paczka-hosting.sh                 # baza PostgreSQL → dist/energia-hosting.zip
+#   BAZA=mariadb bash scripts/paczka-hosting.sh    # baza MariaDB 10.6+ / MySQL 8 → dist/energia-hosting-mariadb.zip
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-OUT=dist/energia-hosting
-rm -rf dist && mkdir -p "$OUT"
+BAZA="${BAZA:-postgresql}"
+case "$BAZA" in
+  postgresql|postgres|pg) BAZA=postgresql; OUT=dist/energia-hosting; ZIP=energia-hosting.zip; BUILD_URL="postgresql://budowanie:x@localhost:5432/x"
+    EXAMPLE_URL='postgresql://UZYTKOWNIK:HASLO@localhost:5432/NAZWA_BAZY?schema=public' ;;
+  mariadb|mysql) BAZA=mariadb; OUT=dist/energia-hosting-mariadb; ZIP=energia-hosting-mariadb.zip; BUILD_URL="mysql://budowanie:x@localhost:3306/x"
+    EXAMPLE_URL='mysql://UZYTKOWNIK:HASLO@localhost:3306/NAZWA_BAZY' ;;
+  *) echo "Nieznana baza: $BAZA (postgresql albo mariadb)"; exit 1 ;;
+esac
+rm -rf "$OUT" "dist/$ZIP" dist/prisma && mkdir -p "$OUT" dist/prisma
 
-echo "▸ Schemat bazy dla PostgreSQL"
-mkdir -p dist/prisma
-sed 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma > dist/prisma/schema.prisma
+echo "▸ Schemat bazy: $BAZA"
+if [[ "$BAZA" == mariadb ]]; then
+  node scripts/schema-mysql.mjs prisma/schema.prisma dist/prisma/schema.prisma
+else
+  sed 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma > dist/prisma/schema.prisma
+fi
 npx prisma generate --schema dist/prisma/schema.prisma >/dev/null
 npx prisma migrate diff --from-empty --to-schema-datamodel dist/prisma/schema.prisma --script > "$OUT/init.sql"
 
 echo "▸ Budowanie aplikacji"
 rm -rf .next/standalone # bez pozostałości z poprzednich uruchomień (np. lokalnego .env)
-DATABASE_URL="postgresql://budowanie:x@localhost:5432/x" npx next build
+DATABASE_URL="$BUILD_URL" npx next build
 
 echo "▸ Składanie paczki"
 cp -r .next/standalone/. "$OUT/"
@@ -31,7 +42,7 @@ cp dist/prisma/schema.prisma "$OUT/schema.prisma"
 rm -f "$OUT/.env" "$OUT"/prisma/*.db
 cat > "$OUT/.env.example" <<'ENV'
 SITE_URL="https://twoja-domena.pl"
-DATABASE_URL="postgresql://UZYTKOWNIK:HASLO@localhost:5432/NAZWA_BAZY?schema=public"
+DATABASE_URL="__EXAMPLE_URL__"
 STORAGE_DIR="/home/LOGIN/energia-pliki"
 ADMIN_EMAIL="admin@twoja-domena.pl"
 ADMIN_PASSWORD="UstawSilneHaslo123"
@@ -59,5 +70,6 @@ ENV
 echo "▸ Przywracanie klienta bazy dla środowiska lokalnego (SQLite)"
 npx prisma generate >/dev/null
 
-(cd dist && rm -f energia-hosting.zip && zip -qr energia-hosting.zip energia-hosting)
-echo "✔ Gotowe: dist/energia-hosting.zip ($(du -h dist/energia-hosting.zip | cut -f1))"
+sed -i "s#__EXAMPLE_URL__#$EXAMPLE_URL#" "$OUT/.env.example"
+(cd dist && zip -qr "$ZIP" "$(basename "$OUT")")
+echo "✔ Gotowe: dist/$ZIP ($(du -h "dist/$ZIP" | cut -f1), baza: $BAZA)"

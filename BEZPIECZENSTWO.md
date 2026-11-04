@@ -48,7 +48,7 @@ Dokument dla osób wdrażających i utrzymujących serwis. Część 1 opisuje za
 - [ ] Repozytorium GitHub prywatne, dostęp tylko dla potrzebnych osób.
 
 **Serwer**
-- [ ] Baza PostgreSQL z osobnym użytkownikiem i długim hasłem (tylko dla tej aplikacji).
+- [ ] Baza (MariaDB lub PostgreSQL) z osobnym użytkownikiem i długim hasłem (tylko dla tej aplikacji).
 - [ ] Katalog plików klientów (`STORAGE_DIR`) **poza** `public_html`.
 - [ ] `.env` uzupełniony, `chmod 600 .env`, `ADMIN_PASSWORD` usunięte po `node setup.js`.
 - [ ] `CRON_SECRET` – losowy, min. 32 znaki; zadanie cron z nagłówkiem `Authorization: Bearer`.

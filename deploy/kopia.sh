@@ -19,7 +19,7 @@ umask 077
 mkdir -p "$KOPIE_DIR"
 
 # --jesli-potrzeba: tryb automatyczny z aplikacji – pomiń, jeśli dzisiejsza kopia już istnieje (młodsza niż 20 h)
-if [[ "${1:-}" == "--jesli-potrzeba" ]] && [[ -n "$(find "$KOPIE_DIR" -name 'baza_*.dump' -mmin -1200 2>/dev/null | head -1)" ]]; then
+if [[ "${1:-}" == "--jesli-potrzeba" ]] && [[ -n "$(find "$KOPIE_DIR" -name 'baza_*' -mmin -1200 2>/dev/null | head -1)" ]]; then
   exit 0
 fi
 # blokada przed równoczesnym uruchomieniem (cron + aplikacja)
@@ -29,9 +29,16 @@ if command -v flock >/dev/null 2>&1 && ! flock -n 9; then
   exit 0
 fi
 
-# baza (format własny pg_dump – odtworzenie: pg_restore --clean -d "$DATABASE_URL" plik.dump)
+# baza: PostgreSQL – pg_dump (odtworzenie: pg_restore --clean --no-owner -d "$DATABASE_URL" plik.dump)
+#       MariaDB/MySQL – mariadb-dump (odtworzenie: gunzip < plik.sql.gz | mariadb NAZWA_BAZY)
 URL="${DATABASE_URL%%\?*}"
-if [[ "$URL" == file:* ]]; then
+if [[ "$URL" == mysql:* ]]; then
+  # MySQL / MariaDB – hasło w pliku tymczasowym (nie widać go na liście procesów)
+  CNF="$(mktemp)"; trap 'rm -f "$CNF"' EXIT
+  DBNAME="$(node -e 'const u=new URL(process.argv[1]);const d=decodeURIComponent;console.log(d(u.pathname.slice(1)));require("fs").writeFileSync(process.argv[2],`[client]\nuser=${d(u.username)}\npassword="${d(u.password).replace(/"/g,"\\\"")}"\nhost=${u.hostname||"localhost"}\nport=${u.port||3306}\n`)' "$URL" "$CNF")"
+  DUMP="$(command -v mariadb-dump || command -v mysqldump)"
+  "$DUMP" --defaults-extra-file="$CNF" --single-transaction --quick --default-character-set=utf8mb4 "$DBNAME" | gzip > "$KOPIE_DIR/baza_$STAMP.sql.gz"
+elif [[ "$URL" == file:* ]]; then
   # SQLite (środowisko testowe) – kopia pliku bazy
   DBF="${URL#file:}"; [[ "$DBF" = /* ]] || DBF="prisma/$DBF"
   cp "$DBF" "$KOPIE_DIR/baza_$STAMP.dump"
@@ -42,6 +49,6 @@ fi
 # pliki klientów (faktury, umowy, logo, obrazy z panelu)
 tar -czf "$KOPIE_DIR/pliki_$STAMP.tar.gz" -C "$(dirname "$STORAGE_DIR")" "$(basename "$STORAGE_DIR")"
 
-find "$KOPIE_DIR" -name 'baza_*.dump' -mtime +"$KOPIE_DNI" -delete
+find "$KOPIE_DIR" -name 'baza_*' -mtime +"$KOPIE_DNI" -delete
 find "$KOPIE_DIR" -name 'pliki_*.tar.gz' -mtime +"$KOPIE_DNI" -delete
-echo "$(date '+%F %T') kopia OK: baza_$STAMP.dump, pliki_$STAMP.tar.gz"
+echo "$(date '+%F %T') kopia OK: $(ls "$KOPIE_DIR" | grep "baza_$STAMP"), pliki_$STAMP.tar.gz"

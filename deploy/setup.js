@@ -20,10 +20,25 @@ const { PrismaClient } = require("@prisma/client");
 const bcrypt = require("bcryptjs");
 const db = new PrismaClient();
 
+// PostgreSQL albo MySQL/MariaDB – rozpoznawane po adresie bazy
+const MYSQL = /^mysql:\/\//.test(process.env.DATABASE_URL || "");
+const Q = MYSQL ? "`" : '"'; // znak cytowania nazw w SQL
+const P = (n) => (MYSQL ? "?" : `$${n}`); // parametr zapytania
+
+async function tableExists(name) {
+  if (MYSQL) {
+    const r = await db.$queryRawUnsafe("SELECT COUNT(*) AS n FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ?", name);
+    return Number(r[0].n) > 0;
+  }
+  const r = await db.$queryRawUnsafe(`SELECT to_regclass('public."${name}"')::text AS t`);
+  return Boolean(r[0] && r[0].t);
+}
+
 async function main() {
   if (!process.env.DATABASE_URL) throw new Error("Brak DATABASE_URL w pliku .env");
-  const exists = await db.$queryRawUnsafe(`SELECT to_regclass('public."User"')::text AS t`);
-  if (!exists[0] || !exists[0].t) {
+  const existed = await tableExists("User");
+  const exists = [{ t: existed }];
+  if (!existed) {
     const sql = fs.readFileSync(path.join(__dirname, "init.sql"), "utf8");
     const statements = sql
       .split(/;\s*\n/)
@@ -61,41 +76,53 @@ async function main() {
 async function upgrade() {
   const sql = fs.readFileSync(path.join(__dirname, "init.sql"), "utf8");
   const statements = sql.split(/;\s*\n/).map((s) => s.replace(/^\s*--.*$/gm, "").trim()).filter(Boolean);
-  const cols = await db.$queryRawUnsafe(`SELECT table_name, column_name FROM information_schema.columns WHERE table_schema = 'public'`);
-  const have = new Set(cols.map((c) => `${c.table_name}.${c.column_name}`));
-  const tables = new Set(cols.map((c) => c.table_name));
+  const cols = await db.$queryRawUnsafe(
+    MYSQL
+      ? "SELECT table_name AS t, column_name AS c FROM information_schema.columns WHERE table_schema = DATABASE()"
+      : "SELECT table_name AS t, column_name AS c FROM information_schema.columns WHERE table_schema = 'public'",
+  );
+  const have = new Set(cols.map((c) => `${c.t}.${c.c}`));
+  const tables = new Set(cols.map((c) => c.t));
+  const found = async (sql, ...args) => (await db.$queryRawUnsafe(sql, ...args)).length > 0;
   let changes = 0;
   const run = async (st) => {
     try {
       await db.$executeRawUnsafe(st);
       changes++;
     } catch (e) {
-      if (!/already exists|istnieje/i.test(e.message)) console.warn("  ! pominięto:", st.split("\n")[0], "–", e.message.split("\n")[0]);
+      if (!/already exists|istnieje|Duplicate/i.test(e.message)) console.warn("  ! pominięto:", st.split("\n")[0], "–", e.message.split("\n")[0]);
     }
   };
   for (const st of statements) {
-    const t = st.match(/^CREATE TABLE "([^"]+)"/);
+    const t = st.match(new RegExp(`^CREATE TABLE ${Q}([^${Q}]+)${Q}`));
     if (t) {
       if (!tables.has(t[1])) {
         await run(st);
         continue;
       }
       for (const line of st.split("\n").slice(1)) {
-        const c = line.trim().replace(/,$/, "").match(/^"([^"]+)"\s+(.+)$/);
-        if (c && !have.has(`${t[1]}.${c[1]}`)) await run(`ALTER TABLE "${t[1]}" ADD COLUMN IF NOT EXISTS "${c[1]}" ${c[2]}`);
+        const l = line.trim().replace(/,$/, "");
+        const c = l.match(new RegExp(`^${Q}([^${Q}]+)${Q}\\s+(.+)$`));
+        if (c && !have.has(`${t[1]}.${c[1]}`)) await run(`ALTER TABLE ${Q}${t[1]}${Q} ADD COLUMN IF NOT EXISTS ${Q}${c[1]}${Q} ${c[2]}`);
+        // MySQL/MariaDB: indeksy są zapisane w CREATE TABLE – dodaj brakujące
+        const ix = MYSQL ? l.match(/^(UNIQUE )?INDEX `([^`]+)`(\(.+\))$/) : null;
+        if (ix && !(await found("SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ?", t[1], ix[2])))
+          await run(`ALTER TABLE ${Q}${t[1]}${Q} ADD ${ix[1] || ""}INDEX ${Q}${ix[2]}${Q}${ix[3]}`);
       }
       continue;
     }
     if (/^CREATE (UNIQUE )?INDEX/.test(st)) {
-      const name = st.match(/INDEX "([^"]+)"/);
-      const found = name ? await db.$queryRawUnsafe(`SELECT 1 FROM pg_class WHERE relname = $1`, name[1]) : [1];
-      if (!found.length) await run(st);
+      const name = st.match(new RegExp(`INDEX ${Q}([^${Q}]+)${Q}`));
+      const sqlI = MYSQL ? "SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND index_name = ?" : `SELECT 1 FROM pg_class WHERE relname = ${P(1)}`;
+      if (name && !(await found(sqlI, name[1]))) await run(st);
       continue;
     }
     if (/^ALTER TABLE .* ADD CONSTRAINT/.test(st)) {
-      const name = st.match(/ADD CONSTRAINT "([^"]+)"/);
-      const found = name ? await db.$queryRawUnsafe(`SELECT 1 FROM pg_constraint WHERE conname = $1`, name[1]) : [1];
-      if (!found.length) await run(st);
+      const name = st.match(new RegExp(`ADD CONSTRAINT ${Q}([^${Q}]+)${Q}`));
+      const sqlC = MYSQL
+        ? "SELECT 1 FROM information_schema.table_constraints WHERE constraint_schema = DATABASE() AND constraint_name = ?"
+        : `SELECT 1 FROM pg_constraint WHERE conname = ${P(1)}`;
+      if (name && !(await found(sqlC, name[1]))) await run(st);
     }
   }
   return changes;
