@@ -14,7 +14,8 @@ async function checked(buf: Buffer, mime: string, name: string) {
   }
 }
 
-const ROOT = path.resolve(process.env.STORAGE_DIR || "./storage");
+// Na Vercelu dysk jest tylko do odczytu poza /tmp (i czyszczony) – wtedy pliki trafiają do /tmp (tylko podgląd!)
+const ROOT = path.resolve(process.env.STORAGE_DIR || (process.env.VERCEL ? "/tmp/energia-pliki" : "./storage"));
 
 export class UploadError extends Error {}
 

@@ -99,6 +99,8 @@ export async function securityChecks(): Promise<Check[]> {
   });
 
   // --- pliki
+  if (env.VERCEL)
+    add({ group: "Pliki", label: "Podgląd na Vercelu", status: "warn", detail: "Pliki klientów i obrazy z panelu są tymczasowe (/tmp) i znikają po restarcie funkcji. Tylko do prezentacji – nie przyjmuj prawdziwych dokumentów.", fix: "Produkcyjnie: hosting z trwałym dyskiem (cyber_Folks)." });
   const { antivirusConfigured } = await import("./filescan");
   add({
     group: "Pliki",
@@ -109,7 +111,7 @@ export async function securityChecks(): Promise<Check[]> {
       : "Działa analiza zawartości (PDF bez skryptów i osadzonych plików, XML bez DOCTYPE, test EICAR). Antywirus ClamAV nie jest podłączony.",
     fix: "Jeśli hosting udostępnia ClamAV (clamd), ustaw CLAMAV_HOST lub CLAMAV_SOCKET w .env.",
   });
-  const storage = path.resolve(env.STORAGE_DIR || "./storage");
+  const storage = path.resolve(env.STORAGE_DIR || (env.VERCEL ? "/tmp/energia-pliki" : "./storage"));
   const inPublic = /public_html|\/public(\/|$)/.test(storage) || storage.startsWith(path.resolve("public"));
   add({ group: "Pliki", label: "Katalog plików klientów", status: inPublic ? "bad" : "ok", detail: storage, fix: "STORAGE_DIR poza public_html, np. /home/LOGIN/energia-pliki." });
   try {
