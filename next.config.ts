@@ -40,14 +40,21 @@ const securityHeaders = [
 // Strony prywatne nie trafiają do pamięci podręcznej pośredników
 const privateHeaders = [{ key: "Cache-Control", value: "private, no-store" }, { key: "X-Robots-Tag", value: "noindex, nofollow" }];
 
+// GitHub Codespaces: strona otwierana przez adres …app.github.dev (przekierowany port) – dopuść ten adres
+// dla formularzy (Server Actions) i plików trybu deweloperskiego. Poza Codespaces nic nie zmienia.
+const csDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
+const csName = process.env.CODESPACE_NAME;
+const csOrigins = csDomain && csName ? [`${csName}-3000.${csDomain}`] : [];
+
 const nextConfig: NextConfig = {
+  ...(csDomain ? { allowedDevOrigins: [`*.${csDomain}`] } : {}),
   trailingSlash: true,
   // Samodzielny serwer (server.js) – do wdrożenia na hostingu Node.js (np. cyber_Folks); Vercel buduje po swojemu
   output: process.env.VERCEL ? undefined : "standalone",
   poweredByHeader: false,
   images: { formats: ["image/avif", "image/webp"] },
   experimental: {
-    serverActions: { bodySizeLimit: "26mb" },
+    serverActions: { bodySizeLimit: "26mb", ...(csOrigins.length ? { allowedOrigins: csOrigins } : {}) },
   },
   async headers() {
     return [
