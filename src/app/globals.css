@@ -1312,40 +1312,59 @@ p {
   font-size: 13px;
   color: #a5a9ad;
 }
-/* „Projekt i wykonanie: VERO STUDIO” – smuga światła przechodząca przez napis */
+/* „Projekt i wykonanie: VERO STUDIO” – napis jak w logo (szeryfowy, VERO jasne, STUDIO złote)
+   i powoli przechodząca smuga światła. Czcionka Cormorant Garamond (SIL OFL), tylko litery napisu. */
+@font-face {
+  font-family: "Vero Serif";
+  src: url("/fonts/vero-cormorant.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+  unicode-range: U+44-45, U+49, U+4F, U+52-56;
+}
 .site-footer a.vero-shine {
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  --split: 41.8%; /* granica VERO | STUDIO (zmierzona) */
+  font-family: "Vero Serif", "Cormorant Garamond", Garamond, Georgia, serif;
+  font-weight: 500;
+  font-size: 1.3em;
+  letter-spacing: 0.2em;
+  line-height: 1;
   text-decoration: none;
-  color: #d5d7da;
-  background: linear-gradient(110deg, #9ea3a8 0%, #9ea3a8 38%, #ffffff 46%, #ffb3ad 50%, #ffffff 54%, #9ea3a8 62%, #9ea3a8 100%);
-  background-size: 250% 100%;
-  filter: drop-shadow(0 0 0 transparent);
-  background-position: 100% 0;
+  white-space: nowrap;
+  color: #f2efea;
+  background:
+    linear-gradient(105deg, transparent 0%, transparent 42%, rgba(255, 255, 255, 0.9) 48%, #fff8e6 50%, rgba(255, 255, 255, 0.9) 52%, transparent 58%, transparent 100%),
+    linear-gradient(90deg, #d9d3c7 0%, #d9d3c7 var(--split), #c39a45 var(--split), #c39a45 100%);
+  background-size: 260% 100%, 100% 100%;
+  background-position: 100% 0, 0 0;
+  background-repeat: no-repeat;
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: vero-shine 3.2s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+  animation: vero-shine 7s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+}
+.site-footer a.vero-shine span {
+  -webkit-text-fill-color: transparent;
 }
 .site-footer a.vero-shine:hover,
 .site-footer a.vero-shine:focus-visible {
-  -webkit-text-fill-color: #fff;
   text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration-color: #c39a45;
+  text-underline-offset: 4px;
 }
+/* przejście światła ok. 4 s, potem ok. 3 s przerwy */
 @keyframes vero-shine {
   0% {
-    background-position: 100% 0;
+    background-position: 100% 0, 0 0;
   }
-  45%,
+  60%,
   100% {
-    background-position: 0% 0;
+    background-position: 0% 0, 0 0;
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .site-footer a.vero-shine {
     animation: none;
-    -webkit-text-fill-color: #d5d7da;
+    background-position: 100% 0, 0 0;
   }
 }
 @media (max-width: 900px) {

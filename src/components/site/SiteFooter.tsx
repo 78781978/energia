@@ -78,7 +78,7 @@ export async function SiteFooter() {
             <span className="footer-credit">
               {" · "}Projekt i wykonanie:{" "}
               <a href="https://www.facebook.com/profile.php?id=61591915780293" target="_blank" rel="noopener noreferrer" className="vero-shine" aria-label="VERO STUDIO – projekt i wykonanie strony (Facebook, otwiera się w nowej karcie)">
-                VERO STUDIO
+                <span className="vero-shine__a">VERO</span> <span className="vero-shine__b">STUDIO</span>
               </a>
             </span>
           </span>
