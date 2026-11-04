@@ -1,0 +1,76 @@
+name: Wdrożenie na cyber_Folks
+
+# Automatyczne wdrażanie: po każdej zmianie na wybranej gałęzi (zmienna WDROZENIE_GALAZ) albo ręcznie
+# (Actions → „Wdrożenie na cyber_Folks” → Run workflow). Konfiguracja: WDROZENIE-CYBERFOLKS.md, krok 10.
+# Dopóki zmienna WDROZENIE_WLACZONE nie jest ustawiona na 1, nic się nie wdraża.
+on:
+  push:
+    branches: [main, "vie/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# jedno wdrożenie naraz – kolejne czeka, nie przerywa trwającego
+concurrency:
+  group: wdrozenie-cyberfolks
+  cancel-in-progress: false
+
+jobs:
+  wdrozenie:
+    if: vars.WDROZENIE_WLACZONE == '1' && (github.event_name == 'workflow_dispatch' || github.ref_name == vars.WDROZENIE_GALAZ)
+    runs-on: ubuntu-latest
+    environment: produkcja
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # nie wdrażamy, jeśli biblioteki mają znane poważne podatności albo kod się nie kompiluje
+      - run: npm audit --omit=dev --audit-level=high
+      - run: npx tsc --noEmit
+
+      - name: Budowanie paczki
+        run: |
+          BAZA="${{ vars.BAZA || 'mariadb' }}"
+          BAZA="$BAZA" bash scripts/paczka-hosting.sh
+          if [ "$BAZA" = "mariadb" ] || [ "$BAZA" = "mysql" ]; then echo "ZIP=dist/energia-hosting-mariadb.zip" >> "$GITHUB_ENV"; else echo "ZIP=dist/energia-hosting.zip" >> "$GITHUB_ENV"; fi
+
+      - name: Klucz SSH
+        env:
+          KEY: ${{ secrets.CYBERFOLKS_SSH_KEY }}
+          KNOWN: ${{ secrets.CYBERFOLKS_KNOWN_HOSTS }}
+          HOST: ${{ secrets.CYBERFOLKS_SSH_HOST }}
+          PORT: ${{ secrets.CYBERFOLKS_SSH_PORT || '22' }}
+        run: |
+          [ -n "$KEY" ] && [ -n "$HOST" ] || { echo "::error::Brak sekretów CYBERFOLKS_SSH_KEY / CYBERFOLKS_SSH_HOST (zob. WDROZENIE-CYBERFOLKS.md, krok 10)"; exit 1; }
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/deploy_key && chmod 600 ~/.ssh/deploy_key
+          if [ -n "$KNOWN" ]; then
+            printf '%s\n' "$KNOWN" > ~/.ssh/known_hosts
+          else
+            echo "::warning::Brak sekretu CYBERFOLKS_KNOWN_HOSTS – odcisk serwera pobrany automatycznie. Dodaj go, aby chronić się przed podszyciem pod serwer."
+            ssh-keyscan -p "$PORT" "$HOST" > ~/.ssh/known_hosts 2>/dev/null
+          fi
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Wdrożenie
+        env:
+          SSH_HOST: ${{ secrets.CYBERFOLKS_SSH_HOST }}
+          SSH_PORT: ${{ secrets.CYBERFOLKS_SSH_PORT || '22' }}
+          SSH_USER: ${{ secrets.CYBERFOLKS_SSH_USER }}
+          SSH_KEY: ~/.ssh/deploy_key
+          SSH_KNOWN_HOSTS_FILE: ~/.ssh/known_hosts
+          APP_DIR: ${{ vars.CYBERFOLKS_APP_DIR }}
+          NODE_ACTIVATE: ${{ vars.CYBERFOLKS_NODE_ACTIVATE }}
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          export SSH_KEY="$HOME/.ssh/deploy_key" SSH_KNOWN_HOSTS_FILE="$HOME/.ssh/known_hosts"
+          bash scripts/wdroz-cyberfolks.sh
+
+      - name: Usunięcie klucza
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

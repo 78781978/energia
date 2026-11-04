@@ -144,7 +144,64 @@ CF_API_TOKEN="TWOJ_TOKEN" node cloudflare.js twoja-domena.pl
 4. Skrypt wypisze klucze Turnstile – wpisz je do `.env`, dodaj `BEHIND_CLOUDFLARE=1`, zrestartuj aplikację.
 5. Usuń token API w Cloudflare. Sprawdź panel → **Stan bezpieczeństwa**.
 
+## 10. Automatyczne wdrażanie z GitHuba
+
+Po jednorazowej konfiguracji każda zmiana wysłana na GitHub (na wybraną gałąź) sama trafia na serwer: GitHub buduje paczkę, robi kopię zapasową na serwerze, wgrywa pliki (bez `.env`, dokumentów klientów i kopii), uruchamia `node setup.js`, restartuje aplikację i sprawdza, czy strona odpowiada. Postęp widać w zakładce **Actions → „Wdrożenie na cyber_Folks”**; o nieudanym wdrożeniu GitHub wyśle e-mail.
+
+Warunek: pierwsze wdrożenie (kroki 1–6, w tym plik `.env`) musi być już zrobione, a pakiet musi mieć **dostęp SSH**.
+
+**1. Klucz SSH tylko dla GitHuba** – na swoim komputerze (Windows: PowerShell, Mac: Terminal):
+
+```bash
+ssh-keygen -t ed25519 -C github-deploy -f deploy_key -N ""
+```
+
+Powstaną dwa pliki: `deploy_key` (prywatny – trafi do GitHuba) i `deploy_key.pub` (publiczny – trafi na serwer).
+
+**2. Klucz publiczny na serwerze:** DirectAdmin → **SSH Keys** → **Paste key** → wklej zawartość `deploy_key.pub` → zapisz. (Bez tej opcji w panelu: dopisz linię do pliku `~/.ssh/authorized_keys` przez Menedżer plików.)
+
+**3. Odcisk serwera** (chroni przed podszyciem się pod serwer) – na komputerze:
+
+```bash
+ssh-keyscan -p PORT_SSH ADRES_SERWERA
+```
+
+Adres serwera i port SSH znajdziesz w panelu cyber_Folks (dane do SSH). Skopiuj cały wynik.
+
+**4. Ścieżka do Node.js:** w **Setup Node.js App** przy aplikacji jest polecenie „Enter to the virtual environment”, np. `source /home/LOGIN/nodevenv/energia/22/bin/activate && cd /home/LOGIN/energia`. Zapisz ścieżkę do pliku `activate`.
+
+**5. Sekrety w GitHubie:** repozytorium → **Settings → Secrets and variables → Actions → New repository secret**:
+
+| Sekret | Wartość |
+|---|---|
+| `CYBERFOLKS_SSH_HOST` | adres serwera SSH |
+| `CYBERFOLKS_SSH_PORT` | port SSH (jeśli inny niż 22) |
+| `CYBERFOLKS_SSH_USER` | login hostingu |
+| `CYBERFOLKS_SSH_KEY` | **cała** zawartość pliku `deploy_key` (razem z liniami BEGIN/END) |
+| `CYBERFOLKS_KNOWN_HOSTS` | wynik polecenia z punktu 3 |
+
+Zakładka **Variables** w tym samym miejscu → **New repository variable**:
+
+| Zmienna | Wartość |
+|---|---|
+| `CYBERFOLKS_APP_DIR` | katalog aplikacji, np. `/home/LOGIN/energia` |
+| `CYBERFOLKS_NODE_ACTIVATE` | ścieżka z punktu 4, np. `/home/LOGIN/nodevenv/energia/22/bin/activate` |
+| `SITE_URL` | adres strony, np. `https://twoja-domena.pl` |
+| `BAZA` | `mariadb` (albo `postgresql`) |
+| `WDROZENIE_GALAZ` | gałąź, z której wdrażać, np. `vie/brave-volta-d9clby` |
+| `WDROZENIE_WLACZONE` | `1` – włącza automat (`0` – wyłącza) |
+
+Po zapisaniu sekretu usuń plik `deploy_key` z komputera (albo przenieś do menedżera haseł).
+
+**6. (Zalecane) Zatwierdzanie wdrożeń:** **Settings → Environments → produkcja → Required reviewers** → dodaj siebie. Każde wdrożenie poczeka wtedy na Twoje kliknięcie „Approve” w GitHubie.
+
+**7. Test:** **Actions → „Wdrożenie na cyber_Folks” → Run workflow**. Po kilku minutach wszystkie kroki powinny być zielone, a ostatni wypisze „Strona odpowiada”.
+
+Restart: skrypt dotyka pliku `tmp/restart.txt` w katalogu aplikacji (tak restartują się aplikacje Node.js w panelu). Jeśli na Twoim pakiecie restart działa inaczej, ustaw zmienną `RESTART_CMD` w kroku „Wdrożenie” pliku `.github/workflows/wdrozenie-cyberfolks.yml`. Ręcznie, bez GitHuba, ten sam skrypt uruchomisz poleceniem `bash scripts/wdroz-cyberfolks.sh` (opis zmiennych na początku pliku).
+
 ## Aktualizacja do nowej wersji
+
+Z automatem z kroku 10 nic nie trzeba robić – wystarczy wysłać zmiany na GitHub. Ręcznie:
 
 1. Pobierz nową paczkę (krok 0).
 2. W katalogu aplikacji podmień wszystko **oprócz** pliku `.env` (katalog `energia-pliki` leży osobno i zostaje nietknięty).
