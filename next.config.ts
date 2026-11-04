@@ -22,7 +22,11 @@ const csp = [
   ...(isProd ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
+// Wersja tymczasowa / podgląd: SITE_NOINDEX=1 – wyszukiwarki nie indeksują żadnej strony
+const noindex = process.env.SITE_NOINDEX === "1" ? [{ key: "X-Robots-Tag", value: "noindex, nofollow" }] : [];
+
 const securityHeaders = [
+  ...noindex,
   { key: "Content-Security-Policy", value: csp },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
@@ -38,8 +42,8 @@ const privateHeaders = [{ key: "Cache-Control", value: "private, no-store" }, { 
 
 const nextConfig: NextConfig = {
   trailingSlash: true,
-  // Samodzielny serwer (server.js) – do wdrożenia na hostingu Node.js (np. cyber_Folks)
-  output: "standalone",
+  // Samodzielny serwer (server.js) – do wdrożenia na hostingu Node.js (np. cyber_Folks); Vercel buduje po swojemu
+  output: process.env.VERCEL ? undefined : "standalone",
   poweredByHeader: false,
   images: { formats: ["image/avif", "image/webp"] },
   experimental: {

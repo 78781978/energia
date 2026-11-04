@@ -11,3 +11,4 @@ storage/
 .DS_Store
 npm-debug.log*
 dist/
+.vercel
