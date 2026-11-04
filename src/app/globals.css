@@ -455,7 +455,7 @@ p {
   .grid-2,
   .grid-3,
   .grid-4 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1412,7 +1412,7 @@ p {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .form-row--3 {
-  grid-template-columns: 2fr 1fr 2fr;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr);
 }
 @media (max-width: 640px) {
   .form-row,
@@ -2106,11 +2106,12 @@ p {
 }
 @media (max-width: 1100px) {
   .two-col {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 .stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--s3);
 }
 
@@ -3063,5 +3064,47 @@ details > summary.btn::-webkit-details-marker {
   .btn--lg {
     white-space: normal;
     text-align: center;
+  }
+}
+
+/* panel i portal na telefonie: żaden element nie rozpycha strony szerzej niż ekran */
+.two-col > *,
+.stack > *,
+.app-main > * {
+  min-width: 0;
+}
+.panel__head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.dl dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.offer-card {
+  min-width: 0;
+}
+.badge {
+  max-width: 100%;
+}
+.form-row > *,
+.doc-list > *,
+.qr-box > * {
+  min-width: 0;
+}
+.doc-list {
+  grid-template-columns: minmax(0, 1fr);
+}
+@media (max-width: 560px) {
+  .filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  /* długie napisy na przyciskach łamią się zamiast wychodzić poza ekran (poza przyciskiem w pasku nagłówka) */
+  .btn:not(.header-cta-mobile) {
+    white-space: normal;
+    text-align: center;
+  }
+  .app-main .panel {
+    padding: 18px;
   }
 }

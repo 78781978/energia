@@ -14,6 +14,7 @@ export default async function Team() {
       <PageHead title="Zespół" sub="Konta administratorów i doradców z dostępem do panelu." />
       <div className="two-col">
         <div className="panel">
+          <div className="table-wrap">
           <table className="data-table">
             <thead>
               <tr>
@@ -46,6 +47,7 @@ export default async function Team() {
               ))}
             </tbody>
           </table>
+          </div>
         </div>
         <div className="panel">
           <div className="panel__head">

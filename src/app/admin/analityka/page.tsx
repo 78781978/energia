@@ -4,7 +4,8 @@ import { PageHead } from "@/components/app/ui";
 
 export const metadata = { title: "Analityka" };
 
-const STEP_NAMES = ["Media", "Lata zakupu", "Model ceny", "Taryfa i zużycie", "Faktura", "Firma i PPE", "Podsumowanie"];
+// Etapy kreatora (wg Miro): rejestracja na etapie 7
+const STEP_NAMES = ["Media", "Lata zakupu", "Warianty zakupu", "Taryfa i zużycie", "Faktury", "Liczniki", "Finalizacja i rejestracja"];
 
 export default async function Analytics() {
   await requireAdmin();
@@ -22,7 +23,7 @@ export default async function Analytics() {
       db.funnelEvent.findMany({ where: { createdAt: { gte: since }, funnel: "wniosek", step: i + 1 }, distinct: ["visitorId"], select: { visitorId: true } }).then((r) => r.length),
     ),
   );
-  const max = Math.max(1, uniq[0] ?? 0, submitted);
+  const max = Math.max(1, ...uniq, submitted); // pasek nigdy nie przekroczy 100%
   void steps;
 
   const sources = new Map<string, { users: number; apps: number; leads: number }>();
@@ -43,7 +44,7 @@ export default async function Analytics() {
       <div className="two-col">
         <section className="panel" aria-labelledby="lejek">
           <div className="panel__head">
-            <h2 id="lejek">Lejek formularza wniosku</h2>
+            <h2 id="lejek">Lejek kreatora zamówienia</h2>
             <span className="muted small">unikalni użytkownicy</span>
           </div>
           <div className="stack" style={{ gap: 10 }}>
@@ -60,7 +61,7 @@ export default async function Analytics() {
                     </span>
                   </div>
                   <div style={{ height: 10, borderRadius: 5, background: "#efece6" }}>
-                    <div style={{ width: `${(row.v / max) * 100}%`, height: "100%", borderRadius: 5, background: i === arr.length - 1 ? "var(--graphite)" : "var(--red)" }} />
+                    <div style={{ width: `${Math.min(100, (row.v / max) * 100)}%`, height: "100%", borderRadius: 5, background: i === arr.length - 1 ? "var(--graphite)" : "var(--red)" }} />
                   </div>
                 </div>
               );

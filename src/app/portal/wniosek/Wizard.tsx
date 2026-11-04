@@ -158,7 +158,7 @@ export function Wizard({
   }, [state]);
 
   useEffect(() => {
-    trackFunnel(visitorId(), step + 1).catch(() => undefined);
+    trackFunnel(visitorId(), step).catch(() => undefined); // etapy 1–7
     topRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [step]);
 
