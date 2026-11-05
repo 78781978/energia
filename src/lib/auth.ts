@@ -10,7 +10,9 @@ import { db } from "./db";
  * Ciasteczko sesji. W produkcji z prefiksem __Host- – przeglądarka przyjmie je tylko przez HTTPS,
  * bez atrybutu Domain i dla ścieżki „/” (nie da się go podłożyć z subdomeny).
  */
-export const SESSION_COOKIE = process.env.NODE_ENV === "production" ? "__Host-eo_session" : "eo_session";
+/** Ciasteczka tylko przez HTTPS – w produkcji zawsze; COOKIE_INSECURE=1 wyłącza to WYŁĄCZNIE do lokalnego podglądu przez http. */
+export const COOKIE_SECURE = process.env.NODE_ENV === "production" && process.env.COOKIE_INSECURE !== "1";
+export const SESSION_COOKIE = COOKIE_SECURE ? "__Host-eo_session" : "eo_session";
 const COOKIE = SESSION_COOKIE;
 const SESSION_DAYS = 14;
 const ADMIN_SESSION_HOURS = 12;
@@ -55,7 +57,7 @@ export async function createSession(userId: string, remember = true): Promise<vo
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: COOKIE_SECURE,
     path: "/",
     ...(remember ? { expires: expiresAt } : {}),
   });

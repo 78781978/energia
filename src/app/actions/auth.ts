@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cookies, headers } from "next/headers";
 import { verifyTotp } from "@/lib/totp";
 import { db } from "@/lib/db";
-import { clientIp, createSession, destroySession, hashPassword, hashToken, newToken, rateLimit, verifyPassword } from "@/lib/auth";
+import { clientIp, COOKIE_SECURE, createSession, destroySession, hashPassword, hashToken, newToken, rateLimit, verifyPassword } from "@/lib/auth";
 import { sendMail } from "@/lib/mail";
 import { isValidEmail, passwordProblem, str } from "@/lib/validators";
 import type { FormState } from "@/lib/forms";
@@ -38,7 +38,7 @@ export async function login(_prev: FormState, fd: FormData): Promise<FormState> 
     await db.emailToken.create({
       data: { id: hashToken(token), userId: user.id, purpose: "LOGIN_2FA", data: JSON.stringify({ remember, next }), expiresAt: new Date(Date.now() + 10 * 60e3) },
     });
-    (await cookies()).set(TWO_FA_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/portal/", maxAge: 600 });
+    (await cookies()).set(TWO_FA_COOKIE, token, { httpOnly: true, sameSite: "lax", secure: COOKIE_SECURE, path: "/portal/", maxAge: 600 });
     redirect("/portal/logowanie/kod/");
   }
   await loginSucceeded(user.id, user.email, user.role, ip);

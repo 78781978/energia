@@ -32,6 +32,8 @@ export async function securityChecks(): Promise<Check[]> {
     detail: proto === "https" ? "Połączenie szyfrowane." : local ? "Serwer lokalny – na hostingu wymagane HTTPS." : "Strona otwarta bez HTTPS.",
     fix: "DirectAdmin → SSL Certificates → Let's Encrypt; w Cloudflare: SSL Full (strict) i Always Use HTTPS.",
   });
+  if (env.COOKIE_INSECURE === "1")
+    add({ group: "Połączenie", label: "Ciasteczka bez HTTPS (COOKIE_INSECURE)", status: prod ? "bad" : "warn", detail: "Ustawiono COOKIE_INSECURE=1 – ciasteczko logowania może zostać wysłane bez szyfrowania. Tylko do lokalnego podglądu.", fix: "Usuń COOKIE_INSECURE z .env." });
   const site = env.SITE_URL ?? "";
   add({ group: "Połączenie", label: "Adres strony (SITE_URL)", status: site.startsWith("https://") ? "ok" : "bad", detail: site || "brak", fix: "W .env: SITE_URL=\"https://twoja-domena.pl\"." });
   const viaCf = Boolean(h.get("cf-ray"));
