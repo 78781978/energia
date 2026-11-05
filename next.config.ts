@@ -40,14 +40,24 @@ const securityHeaders = [
 // Strony prywatne nie trafiają do pamięci podręcznej pośredników
 const privateHeaders = [{ key: "Cache-Control", value: "private, no-store" }, { key: "X-Robots-Tag", value: "noindex, nofollow" }];
 
-// GitHub Codespaces: strona otwierana przez adres …app.github.dev (przekierowany port) – dopuść ten adres
-// dla formularzy (Server Actions) i plików trybu deweloperskiego. Poza Codespaces nic nie zmienia.
+// GitHub Codespaces i inne podglądy: strona otwierana przez adres pośrednika (np. …-3000.app.github.dev)
+// musi być dopuszczona dla formularzy (Server Actions) – inaczej Next.js odrzuca je jako „Invalid Server Actions request”.
+// Wzorce działają tylko w trybie deweloperskim / w Codespaces; produkcja przyjmuje formularze wyłącznie z własnej domeny.
+// Dodatkowe adresy: PREVIEW_ALLOWED_ORIGINS="adres1,adres2" (np. podgląd na innym serwerze).
 const csDomain = process.env.GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN;
-const csName = process.env.CODESPACE_NAME;
-const csOrigins = csDomain && csName ? [`${csName}-3000.${csDomain}`] : [];
+const inCodespaces = Boolean(process.env.CODESPACES || process.env.CODESPACE_NAME || csDomain);
+const previewOrigins = [
+  ...(inCodespaces || !isProdBuild() ? ["*.app.github.dev", "**.github.dev", "**.githubpreview.dev"] : []),
+  ...(csDomain && process.env.CODESPACE_NAME ? [`${process.env.CODESPACE_NAME}-3000.${csDomain}`] : []),
+  ...(process.env.PREVIEW_ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean),
+];
+function isProdBuild() {
+  return process.env.NODE_ENV === "production";
+}
+const csOrigins = previewOrigins;
 
 const nextConfig: NextConfig = {
-  ...(csDomain ? { allowedDevOrigins: [`*.${csDomain}`] } : {}),
+  ...(previewOrigins.length ? { allowedDevOrigins: previewOrigins } : {}),
   trailingSlash: true,
   // Samodzielny serwer (server.js) – do wdrożenia na hostingu Node.js (np. cyber_Folks); Vercel buduje po swojemu
   output: process.env.VERCEL ? undefined : "standalone",
