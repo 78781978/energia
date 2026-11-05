@@ -5,6 +5,8 @@
   "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
   "hostRequirements": { "cpus": 2, "memory": "4gb" },
   "postCreateCommand": "bash .devcontainer/przygotuj.sh",
+  // przy każdym uruchomieniu (także po uśpieniu): najnowsza wersja z GitHuba, biblioteki i baza
+  "postStartCommand": "bash .devcontainer/start.sh",
   "postAttachCommand": "npm run dev",
   "forwardPorts": [3000],
   "portsAttributes": {
