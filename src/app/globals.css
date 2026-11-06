@@ -616,7 +616,7 @@ p {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
-@media (max-width: 1200px) {
+@media (max-width: 1250px) {
   .site-header__inner {
     height: 72px;
   }
@@ -638,8 +638,13 @@ p {
     display: none;
   }
   .mobile-nav {
+    /* nagłówek ma backdrop-filter, więc „fixed” liczy się względem nagłówka – wysokość podajemy wprost */
     position: fixed;
-    inset: 72px 0 0 0;
+    left: 0;
+    right: 0;
+    top: 72px;
+    height: calc(100vh - 72px);
+    height: calc(100dvh - 72px);
     background: var(--cream);
     overflow-y: auto;
     padding: var(--s3) var(--s2) var(--s6);
@@ -685,7 +690,7 @@ p {
     margin-top: var(--s4);
   }
 }
-@media (min-width: 1201px) {
+@media (min-width: 1251px) {
   .mobile-nav {
     display: none;
   }
@@ -3339,3 +3344,38 @@ details > summary.btn::-webkit-details-marker {
 }
 .btn--danger { background: #fff; color: #b3261e; border: 1.5px solid #e2b4b0; }
 .btn--danger:hover { background: #fdecea; color: #8c1d18; }
+
+/* ---------- nagłówek: 8 pozycji menu (z Współpracą i Akademią) ---------- */
+.site-header .site-header__inner {
+  max-width: 1480px;
+}
+@media (min-width: 1251px) {
+  .main-nav {
+    gap: 2px;
+  }
+  .main-nav > a,
+  .main-nav > .nav-item > button {
+    padding: 8px 10px;
+    font-size: 14px;
+  }
+}
+/* węższe laptopy: „Zaloguj się” jako sama ikona, żeby całe menu mieściło się w jednym wierszu */
+@media (min-width: 1251px) and (max-width: 1439px) {
+  .header-login__label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .header-login {
+    padding-inline: 12px;
+  }
+  .site-header .site-header__inner {
+    gap: 16px;
+  }
+  .site-logo img {
+    height: 40px;
+  }
+}

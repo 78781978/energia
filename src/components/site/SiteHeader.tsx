@@ -110,12 +110,14 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
           <Link href="/energia-360/" aria-current={cur("/energia-360/")}>Energia 360</Link>
           <Link href="/aktualnosci/" aria-current={cur("/aktualnosci/")}>Aktualności</Link>
           <Link href="/o-nas/" aria-current={cur("/o-nas/")}>O nas</Link>
+          <Link href="/wspolpraca/" aria-current={cur("/wspolpraca/")}>Współpraca</Link>
+          <Link href="/akademia/" aria-current={cur("/akademia/")}>Akademia</Link>
           <Link href="/kontakt/" aria-current={cur("/kontakt/")}>Kontakt</Link>
         </nav>
 
         <div className="header-actions header-actions--desktop">
-          <Link href={portalHref} className="btn btn--ghost btn--sm">
-            <Icon name="user" size={18} /> {portalLabel}
+          <Link href={portalHref} className="btn btn--ghost btn--sm header-login" title={portalLabel}>
+            <Icon name="user" size={18} /> <span className="header-login__label">{portalLabel}</span>
           </Link>
           {!loggedIn && (
             <Link href="/portal/wniosek/" className="btn btn--sm">
@@ -163,8 +165,11 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
             </details>
           ))}
           <Link href="/jak-to-dziala/">Jak to działa</Link>
+          <Link href="/energia-360/">Energia 360</Link>
           <Link href="/aktualnosci/">Aktualności</Link>
           <Link href="/o-nas/">O nas</Link>
+          <Link href="/wspolpraca/">Współpraca</Link>
+          <Link href="/akademia/">Akademia Energia Online</Link>
           <Link href="/kontakt/">Kontakt</Link>
           <div className="mobile-nav__actions">
             <Link href="/portal/wniosek/" className="btn btn--lg">
