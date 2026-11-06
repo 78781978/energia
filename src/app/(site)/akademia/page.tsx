@@ -25,6 +25,7 @@ const WHY = [
   "Szkolimy nowych doradców energetycznych od 2017 roku.",
   "Stawiamy na praktyczną wiedzę i profesjonalne standardy obsługi.",
   "Pomagamy zdobyć umiejętności potrzebne do rozpoczęcia pracy.",
+  "Po szkoleniu otrzymujesz certyfikat ukończenia szkolenia Akademii Energia Online.",
   "Zapraszamy do współpracy zarówno początkujących, jak i doświadczonych doradców.",
   "Tworzymy społeczność ludzi, którzy chcą rozwijać się w dynamicznej branży energetycznej.",
 ];
@@ -75,11 +76,12 @@ export default function AcademyPage() {
             </p>
           </div>
           <div className="card card--flat" style={{ padding: 40 }}>
-            <span className="eyebrow">Tygodniowe szkolenie</span>
+            <span className="eyebrow">Szkolenia od 1 do 5 dni</span>
             <h2 style={{ fontSize: 24, marginTop: 0 }}>Twój pierwszy krok do nowego zawodu</h2>
             <p className="muted">
-              Przygotowaliśmy intensywne, <strong>7-dniowe szkolenie z doradztwa energetycznego</strong>, podczas którego poznasz praktyczne aspekty
-              pracy doradcy oraz zdobędziesz solidne podstawy do rozpoczęcia działalności w branży.
+              Przygotowaliśmy intensywne <strong>szkolenia z doradztwa energetycznego – od 1 do 5 dni</strong>, podczas których poznasz praktyczne
+              aspekty pracy doradcy oraz zdobędziesz solidne podstawy do rozpoczęcia działalności w branży. Każde szkolenie kończy się{" "}
+              <strong>certyfikatem ukończenia</strong>.
             </p>
             <p style={{ fontWeight: 600, marginBottom: 8 }}>Podczas szkolenia dowiesz się:</p>
             <ul className="checklist">
@@ -155,7 +157,7 @@ export default function AcademyPage() {
               Branża energetyczna to przestrzeń dla osób przedsiębiorczych, komunikatywnych i otwartych na nowe możliwości.
             </p>
             <p style={{ fontWeight: 600 }}>
-              Zainwestuj tydzień w swoją wiedzę. Zdobądź praktyczne umiejętności. Rozpocznij drogę do zostania profesjonalnym doradcą
+              Zainwestuj kilka dni w swoją wiedzę. Zdobądź praktyczne umiejętności i certyfikat. Rozpocznij drogę do zostania profesjonalnym doradcą
               energetycznym.
             </p>
             <p className="muted" style={{ fontWeight: 400 }}>

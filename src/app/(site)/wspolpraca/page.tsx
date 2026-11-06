@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Breadcrumbs, Dot, SectionHead } from "@/components/site/blocks";
 import { LeadForm } from "@/components/site/LeadForm";
 import { Icon } from "@/components/Icon";
-import { PARTNER_COMMISSIONS, PARTNER_TRAINING } from "@/lib/akademia";
+import { PARTNER_TRAINING } from "@/lib/akademia";
 
 export const metadata: Metadata = {
   title: "Współpraca – program partnerski dla elektryków, księgowych i biur rachunkowych",
@@ -117,29 +117,13 @@ export default function CooperationPage() {
           <div>
             <span className="eyebrow">Wynagrodzenie</span>
             <h2>
-              Przykładowy model wynagradzania partnerów<span className="dot">.</span>
+              Polecasz – zarabiasz<span className="dot">.</span>
             </h2>
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Rodzaj polecenia</th>
-                    <th>Wynagrodzenie</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {PARTNER_COMMISSIONS.map((c) => (
-                    <tr key={c.what}>
-                      <td>{c.what}</td>
-                      <td>
-                        <strong>{c.fee}</strong>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <p className="muted small">Wynagrodzenie wypłacamy po opłaceniu usługi przez klienta. Szczegóły określa umowa partnerska.</p>
+            <p className="lead">
+              Za skuteczne polecenia klientów (audyty energetyczne, umowy na energię i gaz, szkolenia) otrzymujesz wynagrodzenie. Jego zasady i
+              wysokość ustalamy indywidualnie i zapisujemy w umowie partnerskiej.
+            </p>
+            <p className="muted">Wynagrodzenie wypłacamy po opłaceniu usługi przez klienta.</p>
           </div>
           <div className="card price-card price-card--free">
             <span className="eyebrow">{PARTNER_TRAINING.who}</span>
