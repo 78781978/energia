@@ -5,6 +5,8 @@ import { db } from "@/lib/db";
 import { DocList, PageHead, fmtDateTime } from "@/components/app/ui";
 import { LEAD_STATUSES, LEAD_TYPES } from "@/lib/constants";
 import { setLeadStatus } from "@/app/actions/admin";
+import { resendLeadToCrm } from "@/app/actions/crm";
+import { livespaceConfigured } from "@/lib/livespace";
 import { formatNip } from "@/lib/validators";
 
 export const metadata = { title: "Zapytanie" };
@@ -14,7 +16,8 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
   const { id } = await params;
   const l = await db.lead.findUnique({ where: { id }, include: { document: true } });
   if (!l) notFound();
-  const existing = await db.user.findUnique({ where: { email: l.email }, select: { id: true } });
+  const existing = l.email ? await db.user.findUnique({ where: { email: l.email }, select: { id: true } }) : null;
+  const crm = livespaceConfigured();
   return (
     <>
       <p className="small" style={{ marginBottom: 8 }}>
@@ -32,7 +35,7 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             <dd>{l.nip ? formatNip(l.nip) : "–"}</dd>
             <dt>E-mail</dt>
             <dd>
-              <a href={`mailto:${l.email}`}>{l.email}</a>
+              {l.email ? <a href={`mailto:${l.email}`}>{l.email}</a> : "–"}
               {existing && (
                 <>
                   {" "}
@@ -62,20 +65,52 @@ export default async function LeadPage({ params }: { params: Promise<{ id: strin
             </>
           )}
         </div>
-        <div className="panel">
-          <div className="panel__head">
-            <h2>Status</h2>
+        <div>
+          <div className="panel">
+            <div className="panel__head">
+              <h2>Livespace (call center)</h2>
+            </div>
+            {!crm ? (
+              <p className="muted small">Integracja nie jest skonfigurowana – zob. Dane firmy → Livespace.</p>
+            ) : l.crmId ? (
+              <p className="small">
+                <span className="badge badge--ok">Wysłano</span> Osoba i zadanie są w Livespace.
+              </p>
+            ) : (
+              <>
+                <p className="small">
+                  {l.crmError ? (
+                    <>
+                      <span className="badge badge--bad">Błąd</span> {l.crmError}
+                    </>
+                  ) : (
+                    <span className="badge badge--info">W trakcie wysyłki</span>
+                  )}
+                </p>
+                <form action={resendLeadToCrm}>
+                  <input type="hidden" name="leadId" value={l.id} />
+                  <button className="btn btn--sm btn--secondary" type="submit">
+                    Wyślij ponownie do Livespace
+                  </button>
+                </form>
+              </>
+            )}
           </div>
-          <div className="btn-row">
-            {Object.entries(LEAD_STATUSES).map(([k, v]) => (
-              <form key={k} action={setLeadStatus}>
-                <input type="hidden" name="leadId" value={l.id} />
-                <input type="hidden" name="status" value={k} />
-                <button className={`btn btn--sm ${l.status === k ? "btn--dark" : "btn--ghost"}`} type="submit" aria-pressed={l.status === k}>
-                  {v}
-                </button>
-              </form>
-            ))}
+          <div className="panel">
+            <div className="panel__head">
+              <h2>Status</h2>
+            </div>
+            <div className="btn-row">
+              {Object.entries(LEAD_STATUSES).map(([k, v]) => (
+                <form key={k} action={setLeadStatus}>
+                  <input type="hidden" name="leadId" value={l.id} />
+                  <input type="hidden" name="status" value={k} />
+                  <button className={`btn btn--sm ${l.status === k ? "btn--dark" : "btn--ghost"}`} type="submit" aria-pressed={l.status === k}>
+                    {v}
+                  </button>
+                </form>
+              ))}
+            </div>
           </div>
         </div>
       </div>

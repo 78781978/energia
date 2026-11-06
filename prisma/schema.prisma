@@ -332,6 +332,8 @@ model Lead {
   documentId  String?
   document    Document? @relation(fields: [documentId], references: [id], onDelete: SetNull)
   marketingConsent Boolean @default(false)
+  crmId       String?   // ID osoby w Livespace (po wysłaniu zgłoszenia do CRM)
+  crmError    String?   // ostatni błąd wysyłki do Livespace
   createdAt   DateTime  @default(now())
 }
 

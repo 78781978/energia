@@ -11,6 +11,23 @@ import type { FormState } from "@/lib/forms";
 import { LEAD_TYPES } from "@/lib/constants";
 import { SITE } from "@/lib/site";
 import { getSiteSettings } from "@/lib/cms";
+import { after } from "next/server";
+import { livespaceConfigured, pushLeadToLivespace, type CrmLead } from "@/lib/livespace";
+
+/** Wysyła zgłoszenie do Livespace po odpowiedzi dla klienta (nie spowalnia formularza); wynik zapisuje przy zgłoszeniu. */
+function syncToCrm(leadId: string, lead: CrmLead) {
+  if (!livespaceConfigured()) return;
+  after(async () => {
+    try {
+      const r = await pushLeadToLivespace(lead);
+      await db.lead.update({ where: { id: leadId }, data: { crmId: r.contactId, crmError: null } });
+    } catch (e) {
+      const msg = (e as Error).message.slice(0, 500);
+      console.error("[livespace]", msg);
+      await db.lead.update({ where: { id: leadId }, data: { crmError: msg } }).catch(() => {});
+    }
+  });
+}
 
 export async function subscribeNewsletter(_prev: FormState, fd: FormData): Promise<FormState> {
   const email = str(fd.get("email"), 200).toLowerCase();
@@ -97,6 +114,19 @@ export async function submitLead(_prev: FormState, fd: FormData): Promise<FormSt
     `Nowe zapytanie: ${LEAD_TYPES[type as keyof typeof LEAD_TYPES]} – ${values.company || values.name}`,
     `Typ: ${LEAD_TYPES[type as keyof typeof LEAD_TYPES]}\nTemat: ${values.topic || "-"}\nImię i nazwisko: ${values.name}\nFirma: ${values.company || "-"}\nNIP: ${values.nip || "-"}\nE-mail: ${values.email}\nTelefon: ${values.phone || "-"}\nZałącznik: ${documentId ? "tak" : "nie"}\n\n${values.message || ""}\n\nPanel: ${SITE.url}/admin/zapytania/${lead.id}/`,
   );
+  syncToCrm(lead.id, {
+    kind: type,
+    kindLabel: LEAD_TYPES[type as keyof typeof LEAD_TYPES],
+    name: values.name,
+    company: values.company || null,
+    nip: values.nip ? normalizeDigits(values.nip) : null,
+    email: values.email,
+    phone: values.phone || null,
+    topic: values.topic || null,
+    message: values.message || null,
+    page: values.pagePath || null,
+    adminUrl: `${SITE.url}/admin/zapytania/${lead.id}/`,
+  });
   await sendMail({
     to: values.email,
     subject: "Otrzymaliśmy Twoje zapytanie",
@@ -134,6 +164,15 @@ export async function requestCallback(_prev: FormState, fd: FormData): Promise<F
     `PILNE: oddzwoń teraz – ${phone}`,
     `Klient prosi o telefon w ciągu 60 sekund.\n\nTelefon: ${phone}\nImię: ${values.name || "-"}\nTemat: ${values.topic || "-"}\nStrona: ${values.pagePath || "-"}\n\nPanel: ${SITE.url}/admin/zapytania/${lead.id}/`,
   );
+  syncToCrm(lead.id, {
+    kind: "TELEFON",
+    kindLabel: LEAD_TYPES.TELEFON,
+    name: values.name || null,
+    phone,
+    topic: values.topic || null,
+    page: values.pagePath || null,
+    adminUrl: `${SITE.url}/admin/zapytania/${lead.id}/`,
+  });
   const hook = process.env.CALLBACK_WEBHOOK_URL;
   if (hook) {
     try {
