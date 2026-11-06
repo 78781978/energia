@@ -1,51 +1,13 @@
 import type { Metadata } from "next";
-import { Breadcrumbs } from "@/components/site/blocks";
-import { SITE } from "@/lib/site";
-import { getSiteSettings } from "@/lib/cms";
+import { LegalDocument } from "@/components/site/LegalDocument";
+import { TERMS } from "@/content/prawne";
 
 export const metadata: Metadata = {
-  title: "Regulamin portalu Energia Online",
-  robots: { index: false },
+  title: "Regulamin portalu Energia w Biznesie | Energia Online",
+  description: "Regulamin świadczenia usług drogą elektroniczną, konta klienta, prezentowania ofert, zawierania umów sprzedaży energii elektrycznej i gazu oraz usług doradztwa energetycznego.",
   alternates: { canonical: "/regulamin/" },
 };
 
-const T = ({ children }: { children: React.ReactNode }) => <span className="todo">{children}</span>;
-
-/** SZABLON – wymaga przygotowania przez prawnika (zob. BRAKI.md). */
-export default async function TermsPage() {
-  const st = await getSiteSettings();
-  return (
-    <section className="page-hero">
-      <div className="container prose legal" style={{ maxWidth: 820 }}>
-        <Breadcrumbs items={[{ name: "Regulamin portalu", path: "/regulamin/" }]} />
-        <h1>Regulamin portalu Energia Online</h1>
-        <div className="alert alert--warn" style={{ marginBottom: 32 }}>
-          <p>Wersja robocza – struktura dokumentu do uzupełnienia i weryfikacji prawnej przed uruchomieniem portalu.</p>
-        </div>
-        <h2>§1. Postanowienia ogólne</h2>
-        <p>
-          Portal prowadzi {st.legalName ?? <T>[nazwa podmiotu]</T>}. Regulamin określa zasady zakładania konta, składania wniosków o ofertę
-          oraz obsługi dokumentów.
-        </p>
-        <h2>§2. Konto użytkownika</h2>
-        <p>
-          <T>[warunki rejestracji, kto może założyć konto, bezpłatność, usunięcie konta]</T>
-        </p>
-        <h2>§3. Wniosek o ofertę i rola portalu</h2>
-        <p>
-          <T>[czy portal jest pośrednikiem/agentem sprzedawcy; na jakim etapie zawierana jest umowa sprzedaży; wynagrodzenie]</T>
-        </p>
-        <h2>§4. Podpisywanie dokumentów</h2>
-        <p>
-          <T>[dopuszczalne formy podpisu: kwalifikowany, zaufany, odręczny skan; moment zawarcia umowy]</T>
-        </p>
-        <h2>§5. Reklamacje</h2>
-        <p>
-          <T>[tryb i terminy reklamacji]</T>
-        </p>
-        <h2>§6. Dane osobowe</h2>
-        <p>Zasady przetwarzania danych opisuje polityka prywatności.</p>
-      </div>
-    </section>
-  );
+export default function TermsPage() {
+  return <LegalDocument doc={TERMS} title="Regulamin portalu Energia w Biznesie | Energia Online" path="/regulamin/" subtitle={TERMS.intro.slice(1)} />;
 }

@@ -132,6 +132,12 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
                         <dd>{st.nip}</dd>
                       </>
                     )}
+                    {SITE.regon && (
+                      <>
+                        <dt>REGON</dt>
+                        <dd>{SITE.regon}</dd>
+                      </>
+                    )}
                     {st.krs && (
                       <>
                         <dt>KRS</dt>

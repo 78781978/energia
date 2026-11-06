@@ -6,8 +6,8 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 
 | # | Czego brakuje | Gdzie się to pojawi | Co teraz jest w serwisie |
 |---|---|---|---|
-| 1 | **Dane firmy**: pełna nazwa podmiotu, NIP, KRS, adres siedziby, telefon, e-mail, godziny pracy, profile LinkedIn/Facebook | stopka, kontakt, polityka prywatności, dane strukturalne Google | pola są ukryte – uzupełnisz je w panelu: **Dane firmy** |
-| 2 | **Polityka prywatności i regulamin portalu** przygotowane przez prawnika/IOD | `/polityka-prywatnosci/`, `/regulamin/` | szablony robocze z oznaczonymi miejscami do uzupełnienia (strony mają `noindex`) |
+| 1 | **Dane firmy** – ✅ uzupełnione z regulaminu i polityki prywatności (nazwa, adres, NIP, REGON, telefon, e-mail, godziny 8–16, Facebook); brak tylko profilu LinkedIn | stopka, kontakt, dane strukturalne Google | zmiana w panelu: **Dane firmy** |
+| 2 | **Polityka prywatności i regulamin portalu** – ✅ treść z dokumentów klienta (5.11.2026); regulamin ma dopisek „Projekt z dnia” – zmienić po zatwierdzeniu | `/polityka-prywatnosci/`, `/regulamin/` | treść w `src/content/prawne.ts` |
 | 3 | **Odpowiedzi do FAQ w kategorii 1** (prąd i gaz dla firm) – w plikach .docx skopiowały się same pytania, bez odpowiedzi (98 pytań na 7 podstronach) | FAQ na podstronach kategorii 1 | na każdej z 7 podstron widoczne są 3 pytania z odpowiedziami; brakujące pytania (lista: `content/import-report.json`) można dopisać samodzielnie w panelu: **Treści strony → podstrona → Dodaj pytanie** |
 | 4 | **Konto pocztowe SMTP** (host, login, hasło, adres nadawcy) i adres do powiadomień zespołu | e-maile: rejestracja, potwierdzenie wniosku, zmiany statusów, reset hasła, zapytania | bez SMTP wiadomości trafiają tylko do logu serwera |
 | 5 | **Hosting i domena** oraz produkcyjna baza danych (zalecany PostgreSQL) i miejsce na pliki klientów z kopią zapasową | – | lokalnie działa SQLite + katalog `storage/` |
