@@ -16,7 +16,7 @@ export const SITE = {
   krs: null as string | null,
   address: "ul. Kwiatów Polnych 8, Wola Więcławska, 32-091 Michałowice" as string | null,
   phone: "12 373 99 89" as string | null,
-  email: "biuro@energiawbiznesie.com" as string | null,
+  email: "biuro@energiawbiznesie.online" as string | null,
   openingHours: "pon.–pt. 8:00–16:00",
   social: { linkedin: null as string | null, facebook: "https://www.facebook.com/profile.php?id=61595353048245" as string | null },
 };
