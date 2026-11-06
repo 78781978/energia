@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { refreshMarketPrices, savePriceList } from "@/app/actions/prices";
+import { importPriceListFile, refreshMarketPrices, savePriceList } from "@/app/actions/prices";
 import { initialFormState } from "@/lib/forms";
 import { FieldError, FormAlert, SubmitButton, invalid } from "@/components/forms";
 
@@ -92,6 +92,54 @@ export function PriceListForm({ defaultFrom, defaultTo }: { defaultFrom: string;
       <div>
         <SubmitButton className="btn" arrow={false} pending="Zapisuję…">
           Zapisz cennik
+        </SubmitButton>
+      </div>
+    </form>
+  );
+}
+
+export function ImportPriceListForm() {
+  const [state, action] = useActionState(importPriceListFile, initialFormState);
+  return (
+    <form action={action} className="form">
+      <div className="field">
+        <label htmlFor="imp-file">Plik cennika (PDF albo Excel)</label>
+        <input
+          id="imp-file"
+          className="input"
+          type="file"
+          name="file"
+          accept="application/pdf,.pdf,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          required
+          style={{ padding: 10 }}
+          {...invalid(state, "file")}
+        />
+        <FieldError state={state} name="file" />
+        <p className="hint">
+          Rozpoznawane automatycznie: <strong>Audax</strong> – tygodniowy cennik gazu (PDF lub Excel), <strong>Enefit</strong> – cennik FIX prądu i
+          gazu (PDF, ceny minimalne i maksymalne, strefy). Sprzedawcę, numer cennika i daty obowiązywania odczytujemy z pliku.
+        </p>
+      </div>
+      <details>
+        <summary className="small" style={{ cursor: "pointer" }}>
+          Zmień daty obowiązywania (opcjonalnie)
+        </summary>
+        <div className="form-row" style={{ marginTop: 12 }}>
+          <div className="field">
+            <label htmlFor="imp-from">Obowiązuje od</label>
+            <input id="imp-from" className="input" type="date" name="validFrom" {...invalid(state, "validFrom")} />
+            <FieldError state={state} name="validFrom" />
+          </div>
+          <div className="field">
+            <label htmlFor="imp-to">Obowiązuje do</label>
+            <input id="imp-to" className="input" type="date" name="validTo" />
+          </div>
+        </div>
+      </details>
+      <FormAlert state={state} />
+      <div>
+        <SubmitButton className="btn" arrow={false} pending="Odczytuję cennik…">
+          Importuj cennik
         </SubmitButton>
       </div>
     </form>

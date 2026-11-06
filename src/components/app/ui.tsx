@@ -7,6 +7,9 @@ export const fmtDateTime = (d: Date | string | null | undefined) =>
   d
     ? new Intl.DateTimeFormat("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).format(new Date(d))
     : "–";
+/** Cena zawsze z dwoma miejscami po przecinku: 423,20. */
+export const fmtPrice = (n: number | null | undefined) =>
+  n == null ? "–" : new Intl.NumberFormat("pl-PL", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
 export const fmtNum = (n: number | null | undefined, digits = 2) =>
   n == null ? "–" : new Intl.NumberFormat("pl-PL", { maximumFractionDigits: digits }).format(n);
 export const fmtSize = (b: number) => (b > 1024 * 1024 ? `${(b / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1024))} kB`);

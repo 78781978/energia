@@ -431,9 +431,13 @@ model PriceList {
   id          String          @id @default(cuid())
   supplier    String
   name        String?
+  number      String?   // numer cennika sprzedawcy, np. W045Y26B2B albo 2026/11/05
+  media       String?   // PRAD | GAZ (null – oba)
+  format      String?   // AUDAX_GAZ | ENEFIT_FIX | TABELA (wklejona)
   validFrom   DateTime
-  validTo     DateTime?
+  validTo     DateTime? // null – do odwołania (zamykany automatycznie przy imporcie kolejnego cennika)
   note        String?
+  conditions  String?   // najważniejsze warunki sprzedawcy z cennika
   documentId  String?
   createdById String?
   createdAt   DateTime        @default(now())
@@ -447,9 +451,13 @@ model PriceListItem {
   media       String    // PRAD | GAZ
   product     String    // np. Stała cena, BASE, SPOT
   tariff      String?   // np. C11, C21, B21, W-3.6
-  year        String?   // np. 2027
-  price       Float     // cena netto zł/MWh
+  zone        String?   // Strefa I/II/III albo Płaska (taryfy wielostrefowe)
+  period      String?   // okres dostaw, np. 01.12.2026–31.12.2027
+  year        String?   // np. 2027, 2027–2028, 12.2026–2027
+  price       Float     // cena netto zł/MWh (u sprzedawców z widełkami – cena minimalna)
+  priceMax    Float?    // cena maksymalna zł/MWh (jeśli cennik ją podaje)
   tradeFee    Float?    // opłata handlowa zł/mies.
+  code        String?   // kod produktu sprzedawcy
   note        String?
 
   @@index([priceListId])

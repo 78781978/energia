@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { PageHead, fmtDate, fmtDateTime, fmtNum } from "@/components/app/ui";
-import { PriceListForm, RefreshPricesForm } from "@/components/app/PriceForms";
+import { PageHead, fmtDate, fmtDateTime, fmtPrice } from "@/components/app/ui";
+import { ImportPriceListForm, PriceListForm, RefreshPricesForm } from "@/components/app/PriceForms";
 import { Icon } from "@/components/Icon";
 import { PSE_SOURCE, plDay, priceListStatus, startOfDay } from "@/lib/prices";
 
@@ -35,19 +35,21 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
       priceList: { validFrom: { lte: now }, OR: [{ validTo: null }, { validTo: { gte: today } }] },
       ...(media ? { media } : {}),
       ...(sp.rok ? { year: { contains: sp.rok.slice(0, 4) } } : {}),
-      ...(sp.taryfa ? { tariff: sp.taryfa.slice(0, 30) } : {}),
+      // „W-1” obejmuje też podtaryfy sprzedawców, np. W-1.1 i W-1.2
+      ...(sp.taryfa ? { OR: [{ tariff: sp.taryfa.slice(0, 30) }, { tariff: { startsWith: `${sp.taryfa.slice(0, 30)}.` } }] } : {}),
     },
     include: { priceList: { select: { id: true, supplier: true, validTo: true } } },
-    orderBy: { price: "asc" },
-    take: 300,
+    orderBy: [{ media: "desc" }, { tariff: "asc" }, { zone: "asc" }, { year: "asc" }, { price: "asc" }],
+    take: 600,
   });
   const allCurrent = await db.priceListItem.findMany({
     where: { priceList: { validFrom: { lte: now }, OR: [{ validTo: null }, { validTo: { gte: today } }] } },
     select: { year: true, tariff: true },
   });
   const years = [...new Set(allCurrent.map((i) => i.year).filter(Boolean) as string[])].sort();
-  const tariffs = [...new Set(allCurrent.map((i) => i.tariff).filter(Boolean) as string[])].sort();
-  const groupKey = (i: (typeof items)[number]) => [i.media, i.product.toLowerCase(), i.tariff ?? "", i.year ?? ""].join("|");
+  const baseTariff = (t: string | null) => (t ?? "").replace(/^(W-\d+)\.\d+$/, "$1");
+  const tariffs = [...new Set(allCurrent.map((i) => baseTariff(i.tariff)).filter(Boolean))].sort();
+  const groupKey = (i: (typeof items)[number]) => [i.media, baseTariff(i.tariff), i.zone ?? "", i.year ?? ""].join("|");
   const best = new Map<string, number>();
   const groupSize = new Map<string, number>();
   for (const i of items) {
@@ -95,19 +97,19 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
             <div className="stat-grid" style={{ marginBottom: 16 }}>
               <div className="stat">
                 <div className="stat__label">Jutro – średnia</div>
-                <div className="stat__value">{tomorrowRow ? fmtNum(tomorrowRow.avg) : "–"}</div>
+                <div className="stat__value">{tomorrowRow ? fmtPrice(tomorrowRow.avg) : "–"}</div>
               </div>
               <div className="stat">
                 <div className="stat__label">Dziś – średnia</div>
-                <div className="stat__value">{todayRow ? fmtNum(todayRow.avg) : "–"}</div>
+                <div className="stat__value">{todayRow ? fmtPrice(todayRow.avg) : "–"}</div>
               </div>
               <div className="stat">
                 <div className="stat__label">Dziś – szczyt 7–22</div>
-                <div className="stat__value">{todayRow?.peakAvg != null ? fmtNum(todayRow.peakAvg) : "–"}</div>
+                <div className="stat__value">{todayRow?.peakAvg != null ? fmtPrice(todayRow.peakAvg) : "–"}</div>
               </div>
               <div className="stat">
                 <div className="stat__label">Średnia z 7 dni</div>
-                <div className="stat__value">{weekAvg != null ? fmtNum(weekAvg) : "–"}</div>
+                <div className="stat__value">{weekAvg != null ? fmtPrice(weekAvg) : "–"}</div>
               </div>
             </div>
             <div className="table-wrap">
@@ -129,11 +131,11 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
                         {m.day === plDay(now, 1) && <span className="badge badge--info" style={{ marginLeft: 8 }}>jutro</span>}
                       </td>
                       <td>
-                        <strong>{fmtNum(m.avg)}</strong>
+                        <strong>{fmtPrice(m.avg)}</strong>
                       </td>
-                      <td>{m.peakAvg != null ? fmtNum(m.peakAvg) : "–"}</td>
-                      <td>{fmtNum(m.min)}</td>
-                      <td>{fmtNum(m.max)}</td>
+                      <td>{m.peakAvg != null ? fmtPrice(m.peakAvg) : "–"}</td>
+                      <td>{fmtPrice(m.min)}</td>
+                      <td>{fmtPrice(m.max)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -188,9 +190,8 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
               <thead>
                 <tr>
                   <th>Sprzedawca</th>
-                  <th>Produkt</th>
                   <th>Taryfa</th>
-                  <th>Rok</th>
+                  <th>Okres</th>
                   <th>Cena zł/MWh</th>
                   <th>Opłata handlowa</th>
                   <th>Ważny do</th>
@@ -206,21 +207,24 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
                       <div className="muted small">{i.media === "GAZ" ? "Gaz" : "Prąd"}</div>
                     </td>
                     <td>
-                      {i.product}
-                      {i.note && <div className="muted small">{i.note}</div>}
+                      {i.tariff ?? "–"}
+                      {i.zone && <div className="muted small">{i.zone}</div>}
                     </td>
-                    <td>{i.tariff ?? "–"}</td>
-                    <td>{i.year ?? "–"}</td>
                     <td>
-                      <strong>{fmtNum(i.price)}</strong>
+                      {i.year ?? "–"}
+                      <div className="muted small">{i.product}</div>
+                    </td>
+                    <td>
+                      <strong>{fmtPrice(i.price)}</strong>
+                      {i.priceMax != null && i.priceMax !== i.price && <span className="muted small"> – {fmtPrice(i.priceMax)}</span>}
                       {(groupSize.get(groupKey(i)) ?? 0) > 1 && best.get(groupKey(i)) === i.price && (
                         <span className="badge badge--ok" style={{ marginLeft: 8 }}>
                           najniższa
                         </span>
                       )}
                     </td>
-                    <td>{i.tradeFee != null ? `${fmtNum(i.tradeFee)} zł/mies.` : "–"}</td>
-                    <td>{fmtDate(i.priceList.validTo)}</td>
+                    <td>{i.tradeFee != null ? `${fmtPrice(i.tradeFee)} zł/mies.` : "–"}</td>
+                    <td>{i.priceList.validTo ? fmtDate(i.priceList.validTo) : "do odwołania"}</td>
                   </tr>
                 ))}
               </tbody>
@@ -236,7 +240,13 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
           <div className="panel__head">
             <h2>Dodaj cennik sprzedawcy</h2>
           </div>
-          <PriceListForm defaultFrom={plDay()} defaultTo={plDay(now, 6)} />
+          <ImportPriceListForm />
+          <details style={{ marginTop: 24 }}>
+            <summary style={{ cursor: "pointer", fontWeight: 700 }}>Inny sprzedawca – wklej tabelę z Excela</summary>
+            <div style={{ marginTop: 16 }}>
+              <PriceListForm defaultFrom={plDay()} defaultTo={plDay(now, 6)} />
+            </div>
+          </details>
         </div>
         <div className="panel">
           <div className="panel__head">
@@ -251,6 +261,7 @@ export default async function PricesPage({ searchParams }: { searchParams: SP })
                     <Link href={`/admin/ceny/${l.id}/`}>
                       <span>
                         <strong>{l.supplier}</strong> {l.name && <span className="muted">· {l.name}</span>}
+                        {l.number && <span className="muted small"> · nr {l.number}</span>}
                         <br />
                         <span className="muted small">
                           {fmtDate(l.validFrom)} – {l.validTo ? fmtDate(l.validTo) : "bezterminowo"} · {l._count.items} pozycji
