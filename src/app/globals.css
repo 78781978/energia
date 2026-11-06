@@ -3379,3 +3379,23 @@ details > summary.btn::-webkit-details-marker {
     height: 40px;
   }
 }
+
+/* O nas: tekst + portret doradcy na górze strony */
+.about-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+  gap: 56px;
+  align-items: center;
+}
+.about-hero .about-portrait {
+  max-width: 440px;
+}
+@media (max-width: 900px) {
+  .about-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+  .about-hero .about-portrait {
+    max-width: 480px;
+  }
+}

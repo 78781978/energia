@@ -32,15 +32,38 @@ export default function AboutPage() {
       <section className="page-hero">
         <div className="container">
           <Breadcrumbs items={[{ name: "O nas", path: "/o-nas/" }]} />
-          <span className="eyebrow">O nas</span>
-          <h1 style={{ maxWidth: 900 }}>
-            Doświadczenie, które przekładamy na realne oszczędności<span className="dot">.</span>
-          </h1>
-          <p className="lead" style={{ maxWidth: 860 }}>
-            Od 2012 roku nasi doradcy zdobywają doświadczenie w branży energetycznej, wspierając przedsiębiorców w zakresie zakupu energii
-            elektrycznej i gazu. Od lat specjalizujemy się w doradztwie energetycznym, pomagając firmom podejmować świadome decyzje zakupowe,
-            optymalizować koszty oraz skutecznie poruszać się w dynamicznie zmieniającym się rynku energii.
-          </p>
+          <div className="about-hero">
+            <div>
+              <span className="eyebrow">O nas</span>
+              <h1 style={{ maxWidth: 900 }}>
+                Doświadczenie, które przekładamy na realne oszczędności<span className="dot">.</span>
+              </h1>
+              <p className="lead" style={{ maxWidth: 860 }}>
+                Od 2012 roku nasi doradcy zdobywają doświadczenie w branży energetycznej, wspierając przedsiębiorców w zakresie zakupu energii
+                elektrycznej i gazu. Od lat specjalizujemy się w doradztwie energetycznym, pomagając firmom podejmować świadome decyzje
+                zakupowe, optymalizować koszty oraz skutecznie poruszać się w dynamicznie zmieniającym się rynku energii.
+              </p>
+              <div className="btn-row">
+                <Link className="btn btn--lg" href="/kontakt/?typ=rozmowa">
+                  Porozmawiaj z doradcą <Icon name="arrowRight" size={18} className="arrow" />
+                </Link>
+                <Link className="btn btn--lg btn--secondary" href="/wspolpraca/">
+                  Współpraca i szkolenia
+                </Link>
+              </div>
+            </div>
+            <figure className="about-portrait">
+              <img
+                src="/img/o-nas/doradca-portret.jpg"
+                srcSet="/img/o-nas/doradca-portret-sm.jpg 561w, /img/o-nas/doradca-portret.jpg 1122w"
+                sizes="(max-width: 900px) 100vw, 440px"
+                width={1122}
+                height={1402}
+                fetchPriority="high"
+                alt="Basia Krzyworzeka – doradca energetyczny Energia w Biznesie. Ludzie, pomysły i działanie; rozwój, inspiracja i realne efekty; wiedza, społeczność, partnerstwa, możliwości."
+              />
+            </figure>
+          </div>
         </div>
       </section>
 
@@ -173,32 +196,19 @@ export default function AboutPage() {
       </section>
 
       <section className="section section--white">
-        <div className="container grid grid-2" style={{ alignItems: "center", gap: 64 }}>
-          <figure className="about-portrait">
-            <img
-              src="/img/o-nas/doradca-portret.jpg"
-              srcSet="/img/o-nas/doradca-portret-sm.jpg 561w, /img/o-nas/doradca-portret.jpg 1122w"
-              sizes="(max-width: 860px) 100vw, 560px"
-              width={1122}
-              height={1402}
-              loading="lazy"
-              alt="Basia Krzyworzeka – doradca energetyczny Energia w Biznesie, tel. 796 901 411. Ludzie, pomysły i działanie; rozwój, inspiracja i realne efekty; wiedza, społeczność, partnerstwa, możliwości."
-            />
-          </figure>
-          <div>
-            <span className="eyebrow">Zespół</span>
-            <h2>
-              Za każdą umową stoi doradca<span className="dot">.</span>
-            </h2>
-            <p className="lead">Prosty język, konkretne liczby i pełne warunki. Jeśli coś się nie opłaca – powiemy to wprost.</p>
-            <div className="btn-row">
-              <Link className="btn btn--lg" href="/kontakt/?typ=rozmowa">
-                Porozmawiaj z doradcą <Icon name="arrowRight" size={18} className="arrow" />
-              </Link>
-              <Link className="btn btn--lg btn--secondary" href="/wspolpraca/">
-                Współpraca i szkolenia
-              </Link>
-            </div>
+        <div className="container" style={{ maxWidth: 820, textAlign: "center" }}>
+          <span className="eyebrow">Zespół</span>
+          <h2>
+            Za każdą umową stoi doradca<span className="dot">.</span>
+          </h2>
+          <p className="lead">Prosty język, konkretne liczby i pełne warunki. Jeśli coś się nie opłaca – powiemy to wprost.</p>
+          <div className="btn-row" style={{ justifyContent: "center" }}>
+            <Link className="btn btn--lg" href="/kontakt/?typ=rozmowa">
+              Porozmawiaj z doradcą <Icon name="arrowRight" size={18} className="arrow" />
+            </Link>
+            <Link className="btn btn--lg btn--secondary" href="/akademia/">
+              Zostań doradcą energetycznym
+            </Link>
           </div>
         </div>
       </section>
