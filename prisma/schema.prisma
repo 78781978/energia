@@ -317,7 +317,7 @@ model OfferAssignment {
 // Zapytania z formularzy serwisu (kontakt, rozmowa z doradcą, analiza faktury)
 model Lead {
   id          String    @id @default(cuid())
-  type        String    // KONTAKT | ROZMOWA | ANALIZA | PRODUKT_TECHNICZNY | POMOC_PRAWNA
+  type        String    // KONTAKT | ROZMOWA | ANALIZA | PRODUKT_TECHNICZNY | POMOC_PRAWNA | TELEFON | WSPOLPRACA | SZKOLENIE
   userId      String?   // zapytanie złożone z portalu
   name        String
   company     String?

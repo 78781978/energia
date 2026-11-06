@@ -116,6 +116,9 @@ export const LEAD_TYPES = {
   ANALIZA: "Analiza faktury",
   PRODUKT_TECHNICZNY: "Produkt techniczny",
   POMOC_PRAWNA: "Pomoc prawna",
+  TELEFON: "Oddzwonienie (60 s)",
+  WSPOLPRACA: "Współpraca / partner",
+  SZKOLENIE: "Zapis na szkolenie",
 } as const;
 export const LEAD_STATUSES = { NOWE: "Nowe", W_TOKU: "W toku", ZAMKNIETE: "Zamknięte" } as const;
 export const OFFER_ASSIGNMENT_STATUS = { PROPONOWANA: "Proponowana", WYBRANA: "Wybrana przez klienta", ODRZUCONA: "Odrzucona" } as const;

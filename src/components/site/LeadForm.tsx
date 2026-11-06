@@ -9,13 +9,17 @@ import { FieldError, FormAlert, Honeypot, SubmitButton, invalid } from "@/compon
 import { Icon } from "@/components/Icon";
 
 type Props = {
-  defaultType?: "KONTAKT" | "ROZMOWA" | "ANALIZA";
+  defaultType?: "KONTAKT" | "ROZMOWA" | "ANALIZA" | "WSPOLPRACA" | "SZKOLENIE";
   topic?: string;
   compact?: boolean;
   showTypes?: boolean;
+  /** Dodatkowe pole wyboru (np. „Jestem…” albo pakiet szkolenia) – dopisywane do tematu zapytania. */
+  option?: { label: string; options: string[]; defaultValue?: string };
+  submitLabel?: string;
+  messagePlaceholder?: string;
 };
 
-export function LeadForm({ defaultType = "KONTAKT", topic = "", compact = false, showTypes = true }: Props) {
+export function LeadForm({ defaultType = "KONTAKT", topic = "", compact = false, showTypes = true, option, submitLabel, messagePlaceholder }: Props) {
   const [state, action] = useActionState(submitLead, initialFormState);
   const [type, setType] = useState(state.values?.type || defaultType);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -68,6 +72,19 @@ export function LeadForm({ defaultType = "KONTAKT", topic = "", compact = false,
           <p>
             Temat: <strong style={{ display: "inline" }}>{topic}</strong>
           </p>
+        </div>
+      )}
+
+      {option && (
+        <div className="field">
+          <label htmlFor={`${id}-option`}>{option.label}</label>
+          <select id={`${id}-option`} className="select" name="option" defaultValue={v.option ?? option.defaultValue ?? option.options[0]}>
+            {option.options.map((o) => (
+              <option key={o} value={o}>
+                {o}
+              </option>
+            ))}
+          </select>
         </div>
       )}
 
@@ -131,7 +148,7 @@ export function LeadForm({ defaultType = "KONTAKT", topic = "", compact = false,
           name="message"
           rows={compact ? 3 : 5}
           defaultValue={v.message}
-          placeholder={type === "ROZMOWA" ? "Kiedy najlepiej zadzwonić? Czego dotyczy rozmowa?" : "Opisz krótko swoją sytuację"}
+          placeholder={messagePlaceholder ?? (type === "ROZMOWA" ? "Kiedy najlepiej zadzwonić? Czego dotyczy rozmowa?" : "Opisz krótko swoją sytuację")}
         />
       </div>
 
@@ -150,7 +167,7 @@ export function LeadForm({ defaultType = "KONTAKT", topic = "", compact = false,
 
       <FormAlert state={state} />
       <div>
-        <SubmitButton className="btn btn--lg">{type === "ROZMOWA" ? "Zamów rozmowę" : type === "ANALIZA" ? "Wyślij do analizy" : "Wyślij wiadomość"}</SubmitButton>
+        <SubmitButton className="btn btn--lg">{submitLabel ?? (type === "ROZMOWA" ? "Zamów rozmowę" : type === "ANALIZA" ? "Wyślij do analizy" : "Wyślij wiadomość")}</SubmitButton>
       </div>
     </form>
   );

@@ -7,6 +7,7 @@ import type { Category } from "@/lib/content";
 import { Breadcrumbs, CtaButtons, FaqList, PortalModule, RichBody } from "@/components/site/blocks";
 import { JsonLd, faqLd, serviceLd } from "@/components/site/JsonLd";
 import { LeadForm } from "@/components/site/LeadForm";
+import { CallbackForm } from "@/components/site/CallbackForm";
 import { Banner, type BannerKey } from "@/components/site/Banner";
 import { Icon } from "@/components/Icon";
 import { ctaLabel, ctaTarget } from "@/lib/cta";
@@ -112,6 +113,7 @@ function ServiceView({ page, responseTime }: { page: ServicePage; responseTime: 
           </article>
 
           <aside className="article-aside" aria-label="Kontakt i powiązane usługi">
+            <CallbackForm topic={navName} />
             <div className="card" style={{ background: "var(--cream)", boxShadow: "none" }}>
               <h2 style={{ fontSize: 20 }}>{leadType === "ANALIZA" ? "Prześlij fakturę do analizy" : "Porozmawiaj z doradcą"}</h2>
               <p className="muted small">Odpowiemy {responseTime}. Pierwsza konsultacja nie zobowiązuje.</p>
@@ -176,6 +178,9 @@ async function CategoryView({ cat, content: p }: { cat: Category; content: Categ
               <h1>{p.h1}</h1>
               {p.lead && <p className="lead">{p.lead}</p>}
               <CtaButtons ctas={heroCtas} slug={cat.slug} max={2} size="btn--lg" />
+              <div style={{ marginTop: 24, maxWidth: 560 }}>
+                <CallbackForm topic={cat.name} />
+              </div>
             </div>
             <div className="page-hero__art">
               <img src={cat.image} alt="" width={300} height={340} />

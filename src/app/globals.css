@@ -3108,3 +3108,185 @@ details > summary.btn::-webkit-details-marker {
     padding: 18px;
   }
 }
+
+/* ---------- O nas: portret doradcy ---------- */
+.about-portrait {
+  margin: 0;
+  justify-self: center;
+  width: 100%;
+  max-width: 520px;
+}
+.about-portrait img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 24px;
+}
+
+/* ---------- Zamów telefon (60 s) ---------- */
+.callback {
+  border: 2px solid var(--red);
+  border-radius: 20px;
+  padding: 24px;
+  background: #fff;
+}
+.callback--dark {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+}
+.callback__head {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.callback__icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  animation: callback-ring 2.4s ease-in-out infinite;
+}
+@keyframes callback-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 48, 38, 0.35); }
+  50% { box-shadow: 0 0 0 10px rgba(255, 48, 38, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .callback__icon { animation: none; }
+}
+.callback__title {
+  font-size: 19px;
+  line-height: 1.25;
+  margin: 0;
+}
+.callback__sub {
+  margin: 4px 0 0;
+  font-size: 14px;
+  opacity: 0.75;
+}
+.callback__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+.callback__consent {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.callback--dark .callback__consent a { color: #fff; }
+.callback__ok {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0;
+  font-weight: 600;
+}
+.callback__ok svg { flex: none; color: var(--green, #1f8a4c); }
+.callback .form-alert, .callback .alert { margin-top: 12px; }
+@media (max-width: 480px) {
+  .callback__row { grid-template-columns: minmax(0, 1fr); }
+  .callback__row .btn { width: 100%; justify-content: center; }
+}
+
+/* ---------- Kontakt: przełącznik sekcji ---------- */
+.contact-switch {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+.contact-switch a {
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--line, #dedad3);
+  font-weight: 700;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+}
+.contact-switch a:hover { border-color: var(--red); }
+
+/* ---------- Współpraca i Akademia ---------- */
+.coop-card { display: flex; flex-direction: column; }
+.coop-card .muted { flex: 1; }
+.coop-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.coop-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.coop-steps__n {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--red);
+  color: #fff;
+  font-weight: 800;
+  margin-bottom: 14px;
+}
+@media (max-width: 960px) { .coop-steps { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 560px) { .coop-steps { grid-template-columns: minmax(0, 1fr); } }
+
+.price-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  align-items: stretch;
+}
+@media (max-width: 1100px) { .price-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .price-grid { grid-template-columns: minmax(0, 1fr); } }
+.price-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.price-card h3 { font-size: 20px; margin: 4px 0; }
+.price-card .muted { flex: 1; }
+.price-card .btn { align-self: flex-start; }
+.price-card__meta { margin: 0; font-size: 14px; font-weight: 600; opacity: 0.7; }
+.price-card__price {
+  margin: 8px 0;
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--red);
+}
+.price-card__price small { display: block; margin-top: 2px; font-size: 14px; font-weight: 600; color: var(--graphite); opacity: 0.7; }
+.price-card--rec { border: 2px solid var(--red); }
+.price-card__flag {
+  position: absolute;
+  top: -13px;
+  right: 20px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.price-card--free { background: #fff; box-shadow: none; border: 2px dashed var(--line-strong); }
+.section--white .price-card--free { background: var(--cream); }
+.price-card--wide {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 24px;
+  align-items: center;
+}
+@media (max-width: 700px) { .price-card--wide { grid-template-columns: minmax(0, 1fr); } }
+.article-aside .callback { padding: 20px; }
+.article-aside .callback__row { grid-template-columns: minmax(0, 1fr); }
+.article-aside .callback__row .btn { width: 100%; justify-content: center; }

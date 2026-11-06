@@ -52,6 +52,8 @@ export async function SiteFooter() {
               <li><Link href="/aktualnosci/">Aktualności</Link></li>
               <li><Link href="/o-nas/">O nas</Link></li>
               <li><Link href="/kontakt/">Kontakt</Link></li>
+              <li><Link href="/wspolpraca/">Współpraca</Link></li>
+              <li><Link href="/akademia/">Akademia Energia Online</Link></li>
               <li><Link href="/portal/logowanie/">Logowanie do portalu</Link></li>
               <li><Link href="/portal/wniosek/">Załóż konto</Link></li>
             </ul>

@@ -26,3 +26,34 @@ export function ctaTarget(raw: string, context: { slug?: string } = {}): CtaTarg
   q.set("temat", ctaLabel(raw));
   return { href: `/kontakt/?${q.toString()}`, kind: "contact" };
 }
+
+export type CtaItem = { raw: string; label: string; target: CtaTarget };
+
+/**
+ * Przyciski jednego rzędu: tylko pierwszy prowadzi do portalu, kolejne „portalowe” – do kontaktu z doradcą
+ * (np. „Porównaj ceny” → portal, „Zamów umowę online” → rozmowa z doradcą). Jeśli w materiałach jest już przycisk
+ * kontaktowy, nadmiarowe przyciski do portalu są pomijane, żeby dwa przyciski obok siebie nie prowadziły w to samo miejsce.
+ */
+export function ctaRow(raws: string[], slug?: string, max = 3): CtaItem[] {
+  const seen = new Set<string>();
+  const all = raws
+    .map((raw) => ({ raw, label: ctaLabel(raw), target: ctaTarget(raw, { slug }) }))
+    .filter((c) => (seen.has(c.label) ? false : (seen.add(c.label), true)));
+  const hasContact = all.some((c) => c.target.kind === "contact");
+  let portalSeen = false;
+  const out: CtaItem[] = [];
+  for (const c of all) {
+    if (c.target.kind === "portal") {
+      if (!portalSeen) {
+        portalSeen = true;
+        out.push(c);
+      } else if (!hasContact) {
+        const q = new URLSearchParams({ typ: "rozmowa" });
+        if (slug) q.set("usluga", slug);
+        q.set("temat", c.label);
+        out.push({ ...c, target: { href: `/kontakt/?${q.toString()}`, kind: "contact" } });
+      }
+    } else out.push(c);
+  }
+  return out.slice(0, max);
+}

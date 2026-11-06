@@ -117,7 +117,7 @@ export function MarkdownEditor({ name, defaultValue, state, rows = 22 }: { name:
         </div>
         <textarea ref={ref} id={`f-${name}`} name={name} className="textarea" rows={rows} value={v} onChange={(e) => setV(e.target.value)} style={{ fontFamily: "ui-monospace, Menlo, Consolas, monospace", fontSize: 14, lineHeight: 1.6 }} {...invalid(state, name)} />
         <span className="hint">
-          Pusta linia = nowy akapit. <code>## </code> śródtytuł, <code>- </code> lista, <code>**tekst**</code> pogrubienie. Przycisk: <code>{"{{cta|ZAMÓW UMOWĘ ONLINE}}"}</code> – przyciski ze słowami „online”, „portal”, „porównaj oferty” prowadzą do portalu, pozostałe do formularza kontaktowego.
+          Pusta linia = nowy akapit. <code>## </code> śródtytuł, <code>- </code> lista, <code>**tekst**</code> pogrubienie. Przycisk: <code>{"{{cta|ZAMÓW UMOWĘ ONLINE}}"}</code> – przyciski ze słowami „online”, „portal”, „porównaj oferty” prowadzą do portalu, pozostałe do formularza kontaktowego. W jednym rzędzie do portalu prowadzi tylko pierwszy przycisk – kolejny kieruje do rozmowy z doradcą.
         </span>
       </div>
       {tab === "preview" && (

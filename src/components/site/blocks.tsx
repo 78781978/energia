@@ -1,17 +1,13 @@
 import Link from "next/link";
 import { Icon } from "@/components/Icon";
-import { ctaLabel, ctaTarget } from "@/lib/cta";
+import { ctaRow } from "@/lib/cta";
 import { renderMarkdown, toBlocks } from "@/lib/markdown";
 import type { Faq } from "@/lib/content";
 import { JsonLd, breadcrumbLd } from "./JsonLd";
 import { Banner } from "./Banner";
 
 export function CtaButtons({ ctas, slug, max = 3, size = "" }: { ctas: string[]; slug?: string; max?: number; size?: string }) {
-  const seen = new Set<string>();
-  const items = ctas
-    .map((c) => ({ raw: c, label: ctaLabel(c), target: ctaTarget(c, { slug }) }))
-    .filter((c) => (seen.has(c.label) ? false : (seen.add(c.label), true)))
-    .slice(0, max);
+  const items = ctaRow(ctas, slug, max);
   return (
     <div className="btn-row">
       {items.map((c, i) => (

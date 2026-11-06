@@ -14,6 +14,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: url("/jak-to-dziala/"), lastModified: now, priority: 0.8 },
     { url: url("/kontakt/"), lastModified: now, priority: 0.7 },
     { url: url("/o-nas/"), lastModified: now, priority: 0.5 },
+    { url: url("/wspolpraca/"), lastModified: now, priority: 0.5 },
+    { url: url("/akademia/"), lastModified: now, priority: 0.6 },
     ...CATEGORIES.map((c) => ({ url: url(`/${c.slug}/`), lastModified: now, priority: 0.9 })),
     ...CATEGORIES.flatMap((c) => c.services.map((s) => ({ url: url(`/${s.slug}/`), lastModified: now, priority: 0.8 }))),
     { url: url("/aktualnosci/"), lastModified: now, priority: 0.6 },

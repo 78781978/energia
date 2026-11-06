@@ -10,6 +10,7 @@ import { isValidEmail, isValidNip, isValidPhone, normalizeDigits, str } from "@/
 import type { FormState } from "@/lib/forms";
 import { LEAD_TYPES } from "@/lib/constants";
 import { SITE } from "@/lib/site";
+import { getSiteSettings } from "@/lib/cms";
 
 export async function subscribeNewsletter(_prev: FormState, fd: FormData): Promise<FormState> {
   const email = str(fd.get("email"), 200).toLowerCase();
@@ -45,8 +46,10 @@ export async function submitLead(_prev: FormState, fd: FormData): Promise<FormSt
     topic: str(fd.get("topic"), 200),
     message: str(fd.get("message"), 4000),
     pagePath: str(fd.get("pagePath"), 300),
+    option: str(fd.get("option"), 120),
   };
   if (str(fd.get("website"))) return { ok: true, message: "Dziękujemy!" };
+  if (values.option) values.topic = [values.topic, values.option].filter(Boolean).join(" – ").slice(0, 200);
   const type = (Object.keys(LEAD_TYPES) as string[]).includes(values.type) ? values.type : "KONTAKT";
   const fe: Record<string, string> = {};
   if (values.name.length < 2) fe.name = "Podaj imię i nazwisko.";
@@ -100,6 +103,58 @@ export async function submitLead(_prev: FormState, fd: FormData): Promise<FormSt
     text: `Dzień dobry,\n\ndziękujemy za kontakt z ${SITE.brand}. Doradca odpowie w ciągu jednego dnia roboczego${type === "ROZMOWA" ? " i oddzwoni na podany numer" : ""}.\n\nTemat: ${values.topic || LEAD_TYPES[type as keyof typeof LEAD_TYPES]}`,
   });
   return { ok: true, message: "Dziękujemy! Doradca skontaktuje się z Tobą w ciągu jednego dnia roboczego." };
+}
+
+/**
+ * „Zamów telefon – oddzwonimy w 60 sekund”: sam numer telefonu, natychmiastowe powiadomienie zespołu
+ * i – jeśli ustawiono CALLBACK_WEBHOOK_URL – przekazanie zgłoszenia do systemu call center (JSON, POST).
+ */
+export async function requestCallback(_prev: FormState, fd: FormData): Promise<FormState> {
+  const values = { phone: str(fd.get("phone"), 30), name: str(fd.get("name"), 120), topic: str(fd.get("topic"), 200), pagePath: str(fd.get("pagePath"), 300) };
+  if (str(fd.get("website"))) return { ok: true, message: "Dziękujemy!" };
+  const fe: Record<string, string> = {};
+  if (!isValidPhone(values.phone)) fe.phone = "Wpisz numer telefonu (9 cyfr).";
+  if (!fd.get("consent")) fe.consent = "Zgoda jest wymagana, abyśmy mogli zadzwonić.";
+  if (Object.keys(fe).length) return { error: Object.values(fe)[0], fieldErrors: fe, values };
+  if (!await rateLimit(`callback:${await clientIp()}`, 3, 30 * 60 * 1000)) return { error: "Zgłoszenie już do nas dotarło. Jeśli nikt nie zadzwonił, spróbuj ponownie za kilkanaście minut.", values };
+
+  const phone = values.phone.replace(/[^\d+]/g, "");
+  const lead = await db.lead.create({
+    data: {
+      type: "TELEFON",
+      name: values.name || "Prośba o telefon",
+      email: "",
+      phone,
+      topic: values.topic || "Zamów telefon – oddzwonienie w 60 sekund",
+      pagePath: values.pagePath || null,
+      source: await readAttribution(),
+    },
+  });
+  await notifyTeam(
+    `PILNE: oddzwoń teraz – ${phone}`,
+    `Klient prosi o telefon w ciągu 60 sekund.\n\nTelefon: ${phone}\nImię: ${values.name || "-"}\nTemat: ${values.topic || "-"}\nStrona: ${values.pagePath || "-"}\n\nPanel: ${SITE.url}/admin/zapytania/${lead.id}/`,
+  );
+  const hook = process.env.CALLBACK_WEBHOOK_URL;
+  if (hook) {
+    try {
+      await fetch(hook, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(process.env.CALLBACK_WEBHOOK_TOKEN ? { Authorization: `Bearer ${process.env.CALLBACK_WEBHOOK_TOKEN}` } : {}),
+        },
+        body: JSON.stringify({ type: "callback", id: lead.id, phone, name: values.name || null, topic: values.topic || null, page: values.pagePath || null, createdAt: lead.createdAt.toISOString() }),
+        signal: AbortSignal.timeout(5000),
+      });
+    } catch (e) {
+      console.error("[callback] webhook call center nie odpowiedział", e);
+    }
+  }
+  const st = await getSiteSettings();
+  return {
+    ok: true,
+    message: `Dziękujemy! Doradca zaraz oddzwoni na numer ${values.phone}.${st.openingHours ? ` Poza godzinami pracy biura (${st.openingHours}) zadzwonimy na początku kolejnego dnia roboczego.` : ""}`,
+  };
 }
 
 /** Zdarzenia lejka formularza wniosku (bez danych osobowych). */

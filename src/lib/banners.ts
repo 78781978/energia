@@ -8,7 +8,7 @@ export const BANNER_DEFAULTS = {
     src: "/img/banery/lepsza-energia.jpg",
     w: 1536,
     h: 1024,
-    alt: "Energia w Biznesie. Lepsza energia dla Twojej firmy. Porównaj oferty dostawców, wybierz najlepszą i załatw wszystko online – szybko i bez zbędnych formalności. Porównaj oferty. Porównanie ofert, prosty proces, oszczędność czasu.",
+    alt: "Lepsza energia dla Twojej firmy. Porównaj oferty dostawców, wybierz najlepszą i załatw wszystko online – szybko i bez zbędnych formalności. Porównaj oferty. Porównanie ofert, prosty proces, oszczędność czasu.",
   },
   rozwiazania: {
     src: "/img/banery/rozwiazania.jpg",
