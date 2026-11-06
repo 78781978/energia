@@ -2,7 +2,8 @@
  * Zadania w tle uruchamiane razem z serwerem – zabezpieczenie na wypadek, gdyby na hostingu
  * nie skonfigurowano harmonogramu zadań (cron) albo przestał działać:
  * - przypomnienia e-mail: raz na dobę (wymaga CRON_SECRET i SITE_URL),
- * - kopia zapasowa kopia.sh: raz na dobę, gdy AUTO_KOPIA=1 (wymaga pg_dump na serwerze).
+ * - kopia zapasowa kopia.sh: raz na dobę, gdy AUTO_KOPIA=1 (wymaga pg_dump na serwerze),
+ * - ceny rynkowe energii z PSE (RCE): co godzinę uzupełnia brakujące doby (wyłącz: CENY_PSE=0).
  * Cron na hostingu pozostaje zalecany: aplikacja może być usypiana, gdy nikt nie odwiedza strony.
  */
 export function startJobs() {
@@ -35,9 +36,21 @@ export function startJobs() {
     child.stderr.on("data", (d) => console.error("[kopia]", String(d).trim()));
   }
 
+  async function marketPrices() {
+    if (process.env.CENY_PSE === "0") return;
+    try {
+      const { syncMarketPrices } = await import("./lib/prices");
+      const r = await syncMarketPrices(14);
+      if (r.errors.length) console.error("[ceny] PSE:", r.errors[0]);
+    } catch (e) {
+      console.error("[ceny] PSE:", (e as Error).message);
+    }
+  }
+
   const tick = () => {
     void reminders();
     void backup();
+    void marketPrices();
   };
   // pierwsze uruchomienie po 2 minutach od startu, potem co godzinę (zadania same sprawdzają, czy już były wykonane dziś)
   setTimeout(tick, Number(process.env.ZADANIA_OPOZNIENIE_S || 120) * 1000).unref?.();

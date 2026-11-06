@@ -243,7 +243,8 @@ export async function saveOffer(_prev: FormState, fd: FormData): Promise<FormSta
   if (file instanceof File && file.size > 0) {
     try {
       const stored = await saveUpload(file, { pdfOnly: true });
-      const doc = await db.document.create({ data: { ...stored, kind: "CENNIK", uploadedById: admin.id, visibleToClient: true } });
+      // cennik sprzedawcy jest dokumentem wewnętrznym – klient widzi tylko warunki oferty, nie plik cennika
+      const doc = await db.document.create({ data: { ...stored, kind: "CENNIK", uploadedById: admin.id, visibleToClient: false } });
       documentId = doc.id;
     } catch (e) {
       if (e instanceof UploadError) return { error: e.message, fieldErrors: { file: e.message } };

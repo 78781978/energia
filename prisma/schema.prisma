@@ -409,3 +409,48 @@ model Media {
 
   posts Post[]
 }
+
+// Ceny rynkowe energii pobierane automatycznie (PSE – rynkowa cena energii RCE) – tylko dla administratorów
+model MarketPrice {
+  id        String   @id @default(cuid())
+  source    String   // PSE_RCE
+  day       String   // RRRR-MM-DD
+  avg       Float    // średnia dobowa zł/MWh
+  min       Float
+  max       Float
+  peakAvg   Float?   // średnia w godzinach 7–22
+  hourly    String   // JSON: 24 średnie godzinowe zł/MWh
+  points    Int
+  fetchedAt DateTime @default(now())
+
+  @@unique([source, day])
+}
+
+// Cenniki sprzedawców (zmieniane zwykle co tydzień) – wyłącznie dla administratorów, nigdy dla klientów
+model PriceList {
+  id          String          @id @default(cuid())
+  supplier    String
+  name        String?
+  validFrom   DateTime
+  validTo     DateTime?
+  note        String?
+  documentId  String?
+  createdById String?
+  createdAt   DateTime        @default(now())
+  items       PriceListItem[]
+}
+
+model PriceListItem {
+  id          String    @id @default(cuid())
+  priceListId String
+  priceList   PriceList @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  media       String    // PRAD | GAZ
+  product     String    // np. Stała cena, BASE, SPOT
+  tariff      String?   // np. C11, C21, B21, W-3.6
+  year        String?   // np. 2027
+  price       Float     // cena netto zł/MWh
+  tradeFee    Float?    // opłata handlowa zł/mies.
+  note        String?
+
+  @@index([priceListId])
+}

@@ -117,6 +117,12 @@ curl -fsS -H "Authorization: Bearer TWOJ_CRON_SECRET" https://twoja-domena.pl/ap
 
 (Klucz w nagłówku, a nie w adresie – nie trafia wtedy do logów serwera.)
 
+**Ceny energii (opcjonalnie):** aplikacja sama co godzinę pobiera ceny rynkowe RCE z PSE (panel → **Ceny energii**, widoczne tylko dla administratorów). Jeśli hosting usypia aplikację, dodaj zadanie cron co godzinę (minuta `20`, godzina `*`):
+
+```bash
+curl -fsS -H "Authorization: Bearer TWOJ_CRON_SECRET" https://twoja-domena.pl/api/cron/ceny/ > /dev/null
+```
+
 ## 8. Kopie zapasowe (harmonogram zadań)
 
 W paczce jest skrypt `kopia.sh`: zapisuje bazę (`mariadb-dump` dla MariaDB/MySQL, `pg_dump` dla PostgreSQL) i katalog plików klientów do `~/kopie`, usuwa kopie starsze niż 14 dni. Dodaj drugie zadanie cron (codziennie, np. 2:30):

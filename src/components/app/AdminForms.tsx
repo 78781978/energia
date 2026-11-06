@@ -422,7 +422,7 @@ export function OfferForm({ offer }: { offer?: OfferData }) {
         <textarea id="o-desc" className="textarea" name="description" rows={3} defaultValue={o.description} />
       </div>
       <div className="field">
-        <label htmlFor="o-file">Cennik PDF {o.hasPdf && <span className="opt">(dodany – nowy plik zastąpi obecny)</span>}</label>
+        <label htmlFor="o-file">Cennik PDF – tylko dla administratorów {o.hasPdf && <span className="opt">(dodany – nowy plik zastąpi obecny)</span>}</label>
         <input id="o-file" className="input" type="file" name="file" accept="application/pdf" style={{ padding: 10 }} />
         <FieldError state={state} name="file" />
       </div>

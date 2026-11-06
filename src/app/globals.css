@@ -3337,3 +3337,5 @@ details > summary.btn::-webkit-details-marker {
   .legal-toc__m { display: block; }
   .legal-toc__d { display: none; }
 }
+.btn--danger { background: #fff; color: #b3261e; border: 1.5px solid #e2b4b0; }
+.btn--danger:hover { background: #fdecea; color: #8c1d18; }

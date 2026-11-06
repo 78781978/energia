@@ -19,6 +19,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         { href: "/admin/", label: "Wnioski", icon: "list", exact: true, count: newApps },
         { href: "/admin/klienci/", label: "Klienci", icon: "building" },
         { href: "/admin/oferty/", label: "Oferty i cenniki", icon: "tag" },
+        { href: "/admin/ceny/", label: "Ceny energii", icon: "chart" },
         { href: "/admin/zapytania/", label: "Zapytania", icon: "message", count: newLeads },
         { href: "/admin/tresci/", label: "Treści strony", icon: "file" },
         { href: "/admin/aktualnosci/", label: "Aktualności", icon: "message" },

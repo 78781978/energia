@@ -108,7 +108,7 @@ export default async function ApplicationDetail({ params, searchParams }: { para
                       {o.offer.validUntil && ` · ważna do ${fmtDate(o.offer.validUntil)}`}
                     </div>
                     {o.note && <div className="small">{o.note}</div>}
-                    {o.offer.document && (
+                    {o.offer.document?.visibleToClient && (
                       <a className="link-arrow small" href={`/api/pliki/${o.offer.document.id}?podglad=1`} target="_blank" rel="noreferrer">
                         <Icon name="file" size={16} /> Cennik / warunki (PDF)
                       </a>
