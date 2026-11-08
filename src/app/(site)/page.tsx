@@ -6,6 +6,7 @@ import { getCategoryCards, listPublishedPosts } from "@/lib/cms";
 import { Dot, FaqList, SectionHead } from "@/components/site/blocks";
 import { NewsletterForm } from "@/components/site/NewsletterForm";
 import { AdvisorSpotlight } from "@/components/site/AdvisorSpotlight";
+import { ProcessSteps } from "@/components/site/ProcessSteps";
 import { Banner } from "@/components/site/Banner";
 import { PostCard } from "@/components/site/PostCard";
 import { JsonLd, faqLd } from "@/components/site/JsonLd";
@@ -99,7 +100,7 @@ export default async function HomePage() {
             title={<Dot>Od faktury do umowy w 7 krokach</Dot>}
             lead="Założenie konta jest bezpłatne. Wniosek wypełnisz w kilka minut – a jeśli nie znasz wszystkich danych, wystarczy faktura."
           />
-          <Banner name="proces" href="/jak-to-dziala/" label="Zobacz, jak działa zakup energii online" />
+          <ProcessSteps />
           <div className="banner-actions" style={{ marginTop: 40 }}>
             <Link className="btn btn--lg" href="/portal/wniosek/">
               Załóż darmowe konto <Icon name="arrowRight" size={18} className="arrow" />

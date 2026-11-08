@@ -7,14 +7,14 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 | # | Czego brakuje | Gdzie się to pojawi | Co teraz jest w serwisie |
 |---|---|---|---|
 | 1 | **Dane firmy** – ✅ uzupełnione z regulaminu i polityki prywatności (nazwa, adres, NIP, REGON, telefon, e-mail, godziny 8–16, Facebook); brak tylko profilu LinkedIn | stopka, kontakt, dane strukturalne Google | zmiana w panelu: **Dane firmy** |
-| 2 | **Polityka prywatności i regulamin portalu** – ✅ treść z dokumentów klienta (5.11.2026); regulamin ma dopisek „Projekt z dnia” – zmienić po zatwierdzeniu | `/polityka-prywatnosci/`, `/regulamin/` | treść w `src/content/prawne.ts` |
+| 2 | **Polityka prywatności i regulamin portalu** – ✅ treść z dokumentów klienta, regulamin zatwierdzony (wersja z 5.11.2026) | `/polityka-prywatnosci/`, `/regulamin/` | treść w `src/content/prawne.ts` |
 | 3 | **Odpowiedzi do FAQ w kategorii 1** (prąd i gaz dla firm) – w plikach .docx skopiowały się same pytania, bez odpowiedzi (98 pytań na 7 podstronach) | FAQ na podstronach kategorii 1 | na każdej z 7 podstron widoczne są 3 pytania z odpowiedziami; brakujące pytania (lista: `content/import-report.json`) można dopisać samodzielnie w panelu: **Treści strony → podstrona → Dodaj pytanie** |
-| 4 | **Konto pocztowe SMTP** (host, login, hasło, adres nadawcy) i adres do powiadomień zespołu | e-maile: rejestracja, potwierdzenie wniosku, zmiany statusów, reset hasła, zapytania | bez SMTP wiadomości trafiają tylko do logu serwera |
-| 5 | **Hosting i domena** oraz produkcyjna baza danych (zalecany PostgreSQL) i miejsce na pliki klientów z kopią zapasową | – | lokalnie działa SQLite + katalog `storage/` |
-| 6 | **Potwierdzenie obietnicy „odpowiadamy w ciągu jednego dnia roboczego”** – księga znaku zaleca nie obiecywać tego, czego nie dowozimy | formularze kontaktowe, e-mail do klienta | tekst jest użyty – zmień, jeśli SLA jest inne |
+| 4 | **Konto pocztowe SMTP** – ✅ skrzynka biuro@energiawbiznesie.online (dane wpisuje się w `.env` na serwerze) | e-maile: rejestracja, potwierdzenie wniosku, zmiany statusów, reset hasła, zapytania | bez SMTP wiadomości trafiają tylko do logu serwera |
+| 5 | **Hosting i domena** – ✅ cyber_Folks (Node.js + MariaDB), domena energiawbiznesie.online | – | lokalnie działa SQLite + katalog `storage/` |
+| 6 | **„Odpowiadamy w ciągu jednego dnia roboczego”** – ✅ potwierdzone przez klienta | formularze kontaktowe, e-mail do klienta | tekst jest użyty – zmień, jeśli SLA jest inne |
 
 | 6a | **Klucze Cloudflare Turnstile** (darmowe) dla domeny | captcha przy rejestracji w kreatorze | bez kluczy działa pole-pułapka i minimalny czas wypełnienia |
-| 6b | **Akceptacja prawnika: klauzula przy ofertach** („propozycje mają charakter informacyjny… mogą zostać zaktualizowane w ciągu 24 godzin…”) i treści zgód (e-mail, SMS, newsletter) | karta ofert, etap 7 kreatora, ustawienia konta | teksty robocze w `src/lib/wizard.ts` i `src/app/portal/wniosek/Wizard.tsx` |
+| 6b | ✅ **Zaakceptowane: klauzula przy ofertach** („propozycje mają charakter informacyjny… mogą zostać zaktualizowane w ciągu 24 godzin…”) i treści zgód (e-mail, SMS, newsletter) | karta ofert, etap 7 kreatora, ustawienia konta | teksty robocze w `src/lib/wizard.ts` i `src/app/portal/wniosek/Wizard.tsx` |
 | 6c | **Harmonogram zadań (cron) i `CRON_SECRET`** na hostingu | przypomnienia e-mail | instrukcja: `WDROZENIE-CYBERFOLKS.md`, krok 7 |
 | 6d | **Przykładowe faktury różnych sprzedawców** (PDF i XML z KSeF, prąd i gaz) do dostrojenia odczytu | „Wczytaj dane z faktury” w kreatorze | odczyt działa dla PDF z warstwą tekstową i XML KSeF; skany wymagają OCR (etap C) |
 
@@ -23,9 +23,9 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 | # | Czego brakuje | Dlaczego |
 |---|---|---|
 | 7 | **Logo w wektorach (SVG/PDF)** w wersjach: Energia w Biznesie, Energia Online, sam symbol, wersja biała | Księga sama wskazuje, że logo jest koncepcją rastrową. Teraz logo jest wycięte z PDF i oczyszczone do PNG – wygląda dobrze, ale wektor będzie ostrzejszy. |
-| 8 | **Ilustracje w wysokiej rozdzielczości jako osobne pliki** (PNG z przezroczystością lub SVG): 10 ilustracji kategorii, 7 ilustracji kroków procesu, Iskra i ilustracje 3D | Teraz są wycięte z zestawień – ilustracje kategorii mają ok. 140 px szerokości, więc na ekranach Retina są lekko miękkie. |
+| 8 | (Ilustracje 7 kroków procesu – ✅ zastąpione własnymi ilustracjami wektorowymi SVG, bez postaci) **Ilustracje w wysokiej rozdzielczości jako osobne pliki** (PNG z przezroczystością lub SVG): 10 ilustracji kategorii, 7 ilustracji kroków procesu, Iskra i ilustracje 3D | Teraz są wycięte z zestawień – ilustracje kategorii mają ok. 140 px szerokości, więc na ekranach Retina są lekko miękkie. |
 | 9 | **Banery bez tekstu** (same grafiki: reflektor, droga z figurkami, „e” z samolotem, parasole, karty produktów) w rozdzielczości min. 2000 px | Na stronie używamy prawej części banerów; tekst jest dodany w HTML (lepsze SEO i dostępność). |
-| 10 | **Zdjęcie doradcy/doradców + 4–5 krótkich „notatek”** do sekcji wzorowanej na przesłanej inspiracji (portret z odręcznymi dopiskami) oraz zgoda na publikację wizerunku | Sekcja jest gotowa (strona główna i „O nas”), teraz pokazuje ilustrację. Zdjęcie wgrywa się w `src/components/site/AdvisorSpotlight.tsx`. Zdjęcie z Pinteresta traktujemy wyłącznie jako inspirację – nie można go użyć. |
+| 10 | ✅ **Zdjęcie doradcy** – portret Basi z odręcznymi notatkami na stronie O nas (numer komórkowy na zdjęciu zaakceptowany) | – |
 | 11 | Ewentualny **licencjonowany font marki** | Księga wskazuje DejaVu Sans jako font wdrożeniowy – tak jest wdrożone. |
 
 ## C. Decyzje biznesowe (ze specyfikacji MVP)
@@ -37,7 +37,7 @@ Lista rzeczy, których brakuje w przesłanych materiałach albo które wymagają
 | 14 | **Czy każdy punkt ma osobną umowę?** | Umowy są dokumentami wniosku – można wgrać kilka (np. po jednej na PPE). Jeśli potrzebne jest śledzenie statusu osobno dla każdego PPE, to rozszerzenie. |
 | 15 | **Rola prawna portalu** (pośrednik / agent sprzedawcy) i moment zawarcia umowy | Teksty mówią: „Wysłanie wniosku nie oznacza zawarcia umowy. Finalizacja zależy od procedur sprzedawcy.” – do potwierdzenia przez prawnika. |
 | 16 | **Nazewnictwo**: treści z .docx nazywają portal „Energia w Biznesie”, a księga znaku rozdziela: Energia Online = portal, Energia w Biznesie = doradztwo | Strona doradcza używa logo Energia w Biznesie, portal i panel – Energia Online. Teksty z dokumentów pozostawiono bez zmian. |
-| 17 | **Teksty stron nadrzędnych kategorii 1 i 2** – w materiałach jest tylko opis struktury, bez gotowej treści | Napisane robocze teksty (do akceptacji) w `src/lib/content.ts`. |
+| 17 | ✅ **Teksty stron nadrzędnych kategorii 1 i 2** – zaakceptowane przez klienta | `src/lib/content.ts` |
 | 18 | **Realne oferty i cenniki sprzedawców** | Administrator dodaje je w panelu „Oferty i cenniki”; dane demo są tylko w trybie `--demo`. |
 
 ## D. Kolejne etapy (zgodnie ze specyfikacją – nie wchodzą w MVP)

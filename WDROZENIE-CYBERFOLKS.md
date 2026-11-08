@@ -7,7 +7,7 @@ Instrukcja uruchomienia serwisu i portalu na hostingu cyber_Folks (panel DirectA
 ## 0. Czego potrzebujesz
 
 - pakiet hostingowy cyber_Folks z obsługą **Node.js (wersja 20 lub 22)** oraz bazą **MariaDB 10.6+ / MySQL 8** (standard w DirectAdmin) albo **PostgreSQL**,
-- domenę podpiętą do hostingu (np. `energiawbiznesie.pl`),
+- domenę podpiętą do hostingu (`energiawbiznesie.online`),
 - skrzynkę e-mail na tej domenie do wysyłki powiadomień (np. `powiadomienia@…`),
 - dostęp **SSH** (zalecany; da się też bez niego, opis w kroku 5),
 - paczkę dla wybranej bazy: **`energia-hosting-mariadb.zip`** (MariaDB/MySQL) albo **`energia-hosting.zip`** (PostgreSQL). Paczki różnią się tylko sterownikiem bazy – nie da się ich zamienić po wgraniu.
