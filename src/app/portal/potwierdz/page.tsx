@@ -15,7 +15,7 @@ export default async function ConfirmEmailPage({ searchParams }: { searchParams:
     <div className="wizard-shell">
       <header className="wizard-shell__bar">
         <Link href="/">
-          <img src="/brand/logo-online.png" alt="energia online" width={160} height={44} style={{ width: 160, height: "auto" }} />
+          <img src="/brand/logo-online.svg" alt="energia online" width={160} height={44} style={{ width: 160, height: "auto" }} />
         </Link>
       </header>
       <main className="wizard-shell__main" style={{ maxWidth: 640 }}>

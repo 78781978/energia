@@ -61,7 +61,7 @@ export function SiteHeader({ categories }: { categories: NavCat[] }) {
     <header className="site-header" data-scrolled={scrolled} ref={navRef}>
       <div className="container site-header__inner">
         <Link href="/" className="site-logo" aria-label="Energia w Biznesie – strona główna">
-          <img src="/brand/logo-biznes.png" alt="energia w biznesie" width={180} height={50} />
+          <img src="/brand/logo-biznes.svg" alt="energia w biznesie" width={180} height={50} />
         </Link>
 
         <nav className="main-nav" aria-label="Główna nawigacja">

@@ -113,7 +113,7 @@ export default function AboutPage() {
         <div className="container">
           <div className="grid grid-2" style={{ gap: 32 }}>
             <div className="card card--flat" style={{ padding: 40 }}>
-              <img src="/brand/logo-biznes.png" alt="energia w biznesie" width={220} height={61} style={{ width: 220, marginBottom: 24 }} />
+              <img src="/brand/logo-biznes.svg" alt="energia w biznesie" width={220} height={61} style={{ width: 220, marginBottom: 24 }} />
               <h2 style={{ fontSize: 24 }}>Doradztwo dla przedsiębiorców</h2>
               <p className="muted">
                 Audyt kosztów energii, optymalizacja dystrybucji, przyłącza, energia bierna, OZE, PPA, spółdzielnie energetyczne, umowy i
@@ -124,7 +124,7 @@ export default function AboutPage() {
               </Link>
             </div>
             <div className="card card--flat" style={{ padding: 40 }}>
-              <img src="/brand/logo-online.png" alt="energia online" width={220} height={61} style={{ width: 220, marginBottom: 24 }} />
+              <img src="/brand/logo-online.svg" alt="energia online" width={220} height={61} style={{ width: 220, marginBottom: 24 }} />
               <h2 style={{ fontSize: 24 }}>Portal zakupowy</h2>
               <p className="muted">
                 Konto firmowe, wniosek o ofertę na prąd i gaz, przesyłanie faktur, porównanie ofert, podpisywanie umów i śledzenie statusu – w

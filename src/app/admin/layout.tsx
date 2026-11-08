@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]);
   return (
     <AppShell
-      logo="/brand/logo-online.png"
+      logo="/brand/logo-online.svg"
       user={{ email: admin.email, name: admin.name, roleLabel: "Administrator" }}
       nav={[
         { href: "/admin/", label: "Wnioski", icon: "list", exact: true, count: newApps },

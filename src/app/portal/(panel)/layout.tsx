@@ -16,7 +16,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
   ]);
   return (
     <AppShell
-      logo="/brand/logo-online.png"
+      logo="/brand/logo-online.svg"
       user={{ email: user.email, name: user.name, roleLabel: "Klient biznesowy", avatar: user.avatarStoredName ? mediaUrl(user.avatarStoredName) : null }}
       nav={[
         { href: "/portal/", label: "Pulpit", icon: "home", exact: true, count: unread },

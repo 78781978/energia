@@ -29,7 +29,7 @@ export default async function WizardPage({ searchParams }: { searchParams: Promi
     <div className="wizard-shell">
       <header className="wizard-shell__bar">
         <Link href={user ? "/portal/" : "/"} aria-label={user ? "Portal Klienta" : "Strona główna"}>
-          <img src="/brand/logo-online.png" alt="energia online" width={160} height={44} style={{ width: 160, height: "auto" }} />
+          <img src="/brand/logo-online.svg" alt="energia online" width={160} height={44} style={{ width: 160, height: "auto" }} />
         </Link>
         <div className="wizard-shell__actions">
           {user ? (

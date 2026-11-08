@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: { default: `${SITE.brand} – prąd i gaz dla firm, doradztwo energetyczne`, template: `%s | ${SITE.brand}` },
   description: SITE.description,
   applicationName: SITE.brand,
-  icons: { icon: "/brand/logo-biznes-symbol.png", apple: "/brand/logo-biznes-symbol.png" },
+  icons: { icon: [{ url: "/brand/logo-biznes-symbol.svg", type: "image/svg+xml" }, { url: "/brand/logo-biznes-symbol.png", type: "image/png" }], apple: "/brand/logo-biznes-symbol.png" },
   openGraph: { siteName: SITE.brand, locale: "pl_PL", type: "website" },
   formatDetection: { telephone: false },
 };

@@ -13,8 +13,8 @@ export async function SiteFooter() {
         <div className="footer-grid">
           <div>
             <div className="footer-brands">
-              <img src="/brand/logo-biznes-white.png" alt="energia w biznesie" width={150} height={42} />
-              <img src="/brand/logo-online-white.png" alt="energia online" width={150} height={42} />
+              <img src="/brand/logo-biznes-white.svg" alt="energia w biznesie" width={150} height={42} />
+              <img src="/brand/logo-online-white.svg" alt="energia online" width={150} height={42} />
             </div>
             <p style={{ maxWidth: 380 }}>
               Doradztwo energetyczne dla przedsiębiorców i portal do zakupu energii online. Jasno, sprawnie i wiarygodnie.

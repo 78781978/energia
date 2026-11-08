@@ -9,7 +9,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="auth-shell">
       <aside className="auth-aside">
         <Link href="/" aria-label="Strona główna">
-          <img src="/brand/logo-online-white.png" alt="energia online" width={200} height={55} style={{ width: 200 }} />
+          <img src="/brand/logo-online-white.svg" alt="energia online" width={200} height={55} style={{ width: 200 }} />
         </Link>
         <div>
           <h2>
@@ -30,7 +30,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <main className="auth-main">
         <div className="auth-card">
           <Link href="/" className="only-mobile" style={{ marginBottom: 32 }}>
-            <img src="/brand/logo-online.png" alt="energia online" width={160} height={44} style={{ width: 160 }} />
+            <img src="/brand/logo-online.svg" alt="energia online" width={160} height={44} style={{ width: 160 }} />
           </Link>
           {children}
         </div>
