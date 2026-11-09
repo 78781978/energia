@@ -1,5 +1,7 @@
 "use server";
 
+import { syncLeadToCrm } from "@/lib/crm-sync";
+
 import { revalidatePath } from "next/cache";
 import { randomBytes } from "node:crypto";
 import { db } from "@/lib/db";
@@ -178,6 +180,18 @@ export async function portalEnquiry(_prev: FormState, fd: FormData): Promise<For
     },
   });
   const label = LEAD_TYPES[type as keyof typeof LEAD_TYPES];
+  syncLeadToCrm(lead.id, {
+    kind: type,
+    kindLabel: `${label} (zapytanie z portalu)`,
+    name: user.name || company?.contactName || null,
+    company: company?.name ?? null,
+    nip: company?.nip ?? null,
+    email: user.email,
+    phone: user.phone ?? company?.contactPhone ?? null,
+    topic: topic || null,
+    message,
+    adminUrl: `${SITE.url}/admin/zapytania/${lead.id}/`,
+  });
   await notifyTeam(`Zapytanie z portalu: ${label} – ${company?.name ?? user.email}`, `${label}\nTemat: ${topic || "-"}\n\n${message}\n\n${SITE.url}/admin/zapytania/${lead.id}/`);
   return { ok: true, message: "Dziękujemy! Ekspert skontaktuje się z Tobą w ciągu jednego dnia roboczego." };
 }

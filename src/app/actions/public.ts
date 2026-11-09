@@ -11,23 +11,7 @@ import type { FormState } from "@/lib/forms";
 import { LEAD_TYPES } from "@/lib/constants";
 import { SITE } from "@/lib/site";
 import { getSiteSettings } from "@/lib/cms";
-import { after } from "next/server";
-import { livespaceConfigured, pushLeadToLivespace, type CrmLead } from "@/lib/livespace";
-
-/** Wysyła zgłoszenie do Livespace po odpowiedzi dla klienta (nie spowalnia formularza); wynik zapisuje przy zgłoszeniu. */
-function syncToCrm(leadId: string, lead: CrmLead) {
-  if (!livespaceConfigured()) return;
-  after(async () => {
-    try {
-      const r = await pushLeadToLivespace(lead);
-      await db.lead.update({ where: { id: leadId }, data: { crmId: r.contactId, crmError: null } });
-    } catch (e) {
-      const msg = (e as Error).message.slice(0, 500);
-      console.error("[livespace]", msg);
-      await db.lead.update({ where: { id: leadId }, data: { crmError: msg } }).catch(() => {});
-    }
-  });
-}
+import { syncLeadToCrm as syncToCrm } from "@/lib/crm-sync";
 
 export async function subscribeNewsletter(_prev: FormState, fd: FormData): Promise<FormState> {
   const email = str(fd.get("email"), 200).toLowerCase();

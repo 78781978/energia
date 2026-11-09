@@ -2,7 +2,7 @@ import "server-only";
 import type { Prisma } from "@prisma/client";
 import { db } from "./db";
 import { notifyTeam, sendMail } from "./mail";
-import { STATUS_HELP, STATUS_LABEL, type AppStatus } from "./constants";
+import { MEDIA, PRICE_MODELS, STATUS_HELP, STATUS_LABEL, type AppStatus } from "./constants";
 import { SITE } from "./site";
 
 export async function nextApplicationNumber(client: Prisma.TransactionClient = db): Promise<string> {
@@ -57,7 +57,74 @@ export function diff<T extends Record<string, unknown>>(before: T, after: Partia
   return out;
 }
 
+/** Wysyła zamówienie z portalu do Livespace: kontakt (firma, osoba, dane energetyczne) + zadanie dla handlowca. */
+export async function syncApplicationToCrm(appId: string): Promise<void> {
+  const { livespaceConfigured, pushLeadToLivespace } = await import("./livespace");
+  if (!livespaceConfigured()) return;
+  const app = await db.application.findUniqueOrThrow({
+    where: { id: appId },
+    include: { company: true, user: true, points: { include: { point: true } } },
+  });
+  const media = MEDIA[app.media as keyof typeof MEDIA] ?? app.media;
+  const models = (app.priceModels ?? app.priceModel)
+    .split(",")
+    .filter(Boolean)
+    .map((m) => PRICE_MODELS[m as keyof typeof PRICE_MODELS]?.label ?? m)
+    .join(", ");
+  const num = (n: number | null | undefined) => (n == null ? "–" : `${String(n).replace(".", ",")} MWh`);
+  const details = [
+    `Zamówienie z portalu: ${app.number} (${media})`,
+    `Lata dostaw: ${app.years.replace(/,/g, ", ")}`,
+    `Model ceny: ${models}`,
+    app.tariff && `Prąd – taryfa ${app.tariff}, zużycie roczne ${num(app.annualUsageMWh)}`,
+    app.tariffGas && `Gaz – taryfa ${app.tariffGas}, zużycie roczne ${num(app.annualUsageGasMWh)}`,
+    ...app.points.map(({ point: p }) =>
+      [
+        `• ${p.medium === "GAZ" ? "PPG" : "PPE"} ${p.ppeNumber ?? "–"}`,
+        p.name && `(${p.name})`,
+        p.tariff && `taryfa ${p.tariff}`,
+        p.annualUsageMWh != null && `zużycie ${num(p.annualUsageMWh)}`,
+        p.currentSeller && `sprzedawca ${p.currentSeller}`,
+        p.contractEndDate && `umowa do ${p.contractEndDate.toISOString().slice(0, 10)}`,
+        [p.street, p.postalCode, p.city].filter(Boolean).join(", "),
+      ]
+        .filter(Boolean)
+        .join(", "),
+    ),
+    app.wantsCall && "Klient prosi o rozmowę z doradcą.",
+    app.clientComment && `Komentarz klienta: ${app.clientComment}`,
+  ].filter(Boolean) as string[];
+  try {
+    const r = await pushLeadToLivespace({
+      kind: "WNIOSEK",
+      kindLabel: "Zamówienie z portalu",
+      name: app.company.contactName,
+      company: app.company.name,
+      nip: app.company.nip,
+      regon: app.company.regon,
+      email: app.company.contactEmail ?? app.user.email,
+      phone: app.company.contactPhone,
+      address: { street: app.company.hqStreet, postcode: app.company.hqPostalCode, city: app.company.hqCity },
+      details,
+      taskTitle: `Nowy wniosek ${app.number} – ${app.company.name}: przygotuj oferty${app.wantsCall ? " i zadzwoń" : ""}`,
+      adminUrl: `${SITE.url}/admin/wnioski/${app.id}/`,
+    });
+    await db.application.update({ where: { id: appId }, data: { crmId: r.contactId, crmError: null } });
+  } catch (e) {
+    const msg = (e as Error).message.slice(0, 500);
+    console.error("[livespace] wniosek:", msg);
+    await db.application.update({ where: { id: appId }, data: { crmError: msg } }).catch(() => {});
+  }
+}
+
 export async function notifyNewApplication(appId: string) {
+  // Livespace w tle – po odpowiedzi dla klienta
+  try {
+    const { after } = await import("next/server");
+    after(() => syncApplicationToCrm(appId));
+  } catch {
+    void syncApplicationToCrm(appId);
+  }
   const app = await db.application.findUniqueOrThrow({ where: { id: appId }, include: { company: true, user: true, points: true } });
   await notifyTeam(
     `Nowy wniosek ${app.number} – ${app.company.name}`,

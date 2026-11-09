@@ -8,6 +8,7 @@
  *   LIVESPACE_USER_ID=…            (opcjonalnie: kto dostaje zadania i powiadomienia; ID w panelu → Dane firmy → Livespace)
  *   LIVESPACE_TASK_TYPE_ID=…       (opcjonalnie: typ zadania; domyślnie typ o nazwie „Telefon”/„Rozmowa”/„Call”)
  *   LIVESPACE_SOURCE=…             (opcjonalnie: źródło kontaktu, np. „Strona www” – musi istnieć w Livespace)
+ *   LIVESPACE_GROUP_ID=…           (opcjonalnie: grupa kontaktów, np. „kontaktowy” – ID z Ustawienia konta → API → Kontakty)
  * Dokumentacja API: https://api-docs.livespace.io/
  */
 import { createHash } from "node:crypto";
@@ -87,6 +88,12 @@ async function callTypeId(): Promise<string | null> {
 }
 
 export type CrmLead = {
+  /** dodatkowe linie notatki (np. dane zamówienia z portalu) */
+  details?: string[];
+  /** tytuł zadania zamiast domyślnego */
+  taskTitle?: string;
+  regon?: string | null;
+  address?: { street?: string | null; postcode?: string | null; city?: string | null } | null;
   kind: "TELEFON" | "ROZMOWA" | "ANALIZA" | "KONTAKT" | "WSPOLPRACA" | "SZKOLENIE" | string;
   kindLabel: string;
   name?: string | null;
@@ -115,9 +122,10 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
   const mobile = digits.length === 9 && /^(45|50|51|53|57|60|66|69|72|73|78|79|88)/.test(digits);
 
   const note = [
-    `${lead.kindLabel} – formularz na stronie Energia w Biznesie`,
+    lead.kind === "WNIOSEK" ? null : `${lead.kindLabel} – formularz na stronie Energia w Biznesie`,
     lead.topic && `Temat: ${lead.topic}`,
     lead.message && `Wiadomość: ${lead.message}`,
+    ...(lead.details ?? []),
     lead.page && `Strona: ${lead.page}`,
     lead.adminUrl && `Panel portalu: ${lead.adminUrl}`,
   ]
@@ -130,7 +138,9 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
     note,
     ...(lead.phone ? { phones: [{ phone_no: lead.phone, type: mobile ? 2 : 1, is_default: true }] } : {}),
     ...(lead.email ? { emails: [{ email: lead.email, is_default: true }] } : {}),
-    ...(lead.company ? { company: { name: lead.company, ...(lead.nip ? { nip: lead.nip } : {}) } } : {}),
+    ...(lead.company ? { company: { name: lead.company, ...(lead.nip ? { nip: lead.nip } : {}), ...(lead.regon ? { regon: lead.regon } : {}) } } : {}),
+    ...(lead.address?.city ? { addresses: [{ street: lead.address.street ?? "", postcode: lead.address.postcode ?? "", city: lead.address.city, country: "Polska" }] } : {}),
+    ...(process.env.LIVESPACE_GROUP_ID ? { groups: [process.env.LIVESPACE_GROUP_ID] } : {}),
     ...(process.env.LIVESPACE_SOURCE ? { contact_source: process.env.LIVESPACE_SOURCE } : {}),
     ...(userId ? { owner_id: userId } : {}),
   };
@@ -142,7 +152,7 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
   const typeId = await callTypeId();
   const todo = await livespaceCall<{ todo?: { id?: string } }>("Todo/addTodo", {
     todo: {
-      title: urgent ? `PILNE: oddzwoń w 60 s – ${lead.phone}` : `${lead.kindLabel}: ${lead.name || lead.phone || lead.email}`,
+      title: lead.taskTitle ?? (urgent ? `PILNE: oddzwoń w 60 s – ${lead.phone}` : `${lead.kindLabel}: ${lead.name || lead.phone || lead.email}`),
       date: lsDate(),
       description: note,
       priority: urgent ? 1 : 0,

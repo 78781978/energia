@@ -16,7 +16,7 @@ import { isPlausiblePpe, isValidEmail, isValidNip, isValidPhone, isValidPostalCo
 // Etapy 1–7 wg tablicy Miro; nazw etapów nie wyświetlamy (wytyczna). Rejestracja na końcu – etap 7.
 const LAST = 7;
 const STEP_NUMS = [1, 2, 3, 4, 5, 6, 7];
-const STEP_ART = ["", "krok-1", "krok-2", "krok-3", "krok-4", "krok-5", "krok-6", "krok-7"].map((k) => `/img/kroki/${k}.jpg`);
+const STEP_ART = ["", "krok-1", "krok-2", "krok-3", "krok-4", "krok-5", "krok-6", "krok-7"].map((k) => `/img/kroki/${k}.svg`);
 const COMPANY_FIELDS = ["companyName", "nip", "regon", "contactName", "contactPhone", "contactEmail", "hqStreet", "hqPostalCode", "hqCity", "corrStreet", "corrPostalCode", "corrCity"];
 function fieldStep(k: string): number {
   if (COMPANY_FIELDS.includes(k)) return 7;
@@ -392,7 +392,7 @@ export function Wizard({
         }}
       >
         <div className="wizard__art" aria-hidden="true">
-          <img src={STEP_ART[step]} alt="" width={1312} height={1199} />
+          <img src={STEP_ART[step]} alt="" width={480} height={440} />
         </div>
         {step !== LAST && state.error && (
           <div style={{ marginBottom: 16 }}>

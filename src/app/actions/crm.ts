@@ -34,3 +34,13 @@ export async function resendLeadToCrm(fd: FormData): Promise<void> {
   }
   revalidatePath(`/admin/zapytania/${id}/`);
 }
+
+/** Ponowne wysłanie zamówienia z portalu do Livespace. */
+export async function resendApplicationToCrm(fd: FormData): Promise<void> {
+  await requireAdmin();
+  const id = str(fd.get("applicationId"), 40);
+  if (!id || !livespaceConfigured()) return;
+  const { syncApplicationToCrm } = await import("@/lib/applications");
+  await syncApplicationToCrm(id);
+  revalidatePath(`/admin/wnioski/${id}/`);
+}

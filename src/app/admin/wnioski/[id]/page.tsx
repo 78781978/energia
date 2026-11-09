@@ -10,6 +10,8 @@ import { MEDIA, OFFER_ASSIGNMENT_STATUS, PRICE_MODELS, STATUS_LABEL, type AppSta
 import { companyDraft, pointDrafts } from "@/lib/drafts";
 import { linkPointsToApplication, removeOfferAssignment, toggleDocumentVisibility } from "@/app/actions/admin";
 import { formatNip } from "@/lib/validators";
+import { resendApplicationToCrm } from "@/app/actions/crm";
+import { livespaceConfigured } from "@/lib/livespace";
 
 export const metadata = { title: "Karta wniosku" };
 
@@ -314,6 +316,37 @@ export default async function AdminApplication({ params }: { params: Promise<{ i
               <h2>Status</h2>
             </div>
             <StatusForm applicationId={app.id} current={app.status} />
+          </section>
+
+          <section className="panel">
+            <div className="panel__head">
+              <h2>Livespace</h2>
+            </div>
+            {!livespaceConfigured() ? (
+              <p className="muted small">Integracja nie jest skonfigurowana (Dane firmy → Livespace).</p>
+            ) : app.crmId ? (
+              <p className="small">
+                <span className="badge badge--ok">Wysłano</span> Kontakt i zadanie są w Livespace.
+              </p>
+            ) : (
+              <>
+                <p className="small">
+                  {app.crmError ? (
+                    <>
+                      <span className="badge badge--bad">Błąd</span> {app.crmError}
+                    </>
+                  ) : (
+                    <span className="badge badge--info">W trakcie wysyłki</span>
+                  )}
+                </p>
+                <form action={resendApplicationToCrm}>
+                  <input type="hidden" name="applicationId" value={app.id} />
+                  <button className="btn btn--sm btn--secondary" type="submit">
+                    Wyślij ponownie do Livespace
+                  </button>
+                </form>
+              </>
+            )}
           </section>
 
           <section className="panel">
