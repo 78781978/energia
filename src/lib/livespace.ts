@@ -5,7 +5,9 @@
  * Konfiguracja w .env (klucze z Livespace → Ustawienia konta → API → Użytkownicy; API dostępne od pakietu Automation):
  *   LIVESPACE_URL=https://twojafirma.livespace.io
  *   LIVESPACE_API_KEY=…            LIVESPACE_API_SECRET=…
- *   LIVESPACE_USER_ID=…            (opcjonalnie: kto dostaje zadania i powiadomienia; ID w panelu → Dane firmy → Livespace)
+ *   LIVESPACE_USER_ID=…            (kto dostaje zadania i powiadomienia; jedno ID albo kilka po przecinku – pierwsza osoba jest
+ *                                  właścicielem kontaktu i zadania, pozostałe są zapraszane; ID w panelu → Dane firmy → Livespace)
+ *   LIVESPACE_FIELDS={…}           (opcjonalnie: pola dodatkowe kontaktu, np. {"taryfa":"ID","zuzycie":"ID"})
  *   LIVESPACE_TASK_TYPE_ID=…       (opcjonalnie: typ zadania; domyślnie typ o nazwie „Telefon”/„Rozmowa”/„Call”)
  *   LIVESPACE_SOURCE=…             (opcjonalnie: źródło kontaktu, np. „Strona www” – musi istnieć w Livespace)
  *   LIVESPACE_GROUP_ID=…           (opcjonalnie: grupa kontaktów, np. „kontaktowy” – ID z Ustawienia konta → API → Kontakty)
@@ -71,6 +73,85 @@ function lsDate(d = new Date()): string {
     .replace("T", " ");
 }
 
+/** Osoby, które dostają zadania i powiadomienia: LIVESPACE_USER_ID (jedno ID albo kilka po przecinku). */
+export function livespaceUserIds(): string[] {
+  return (process.env.LIVESPACE_USER_ID || "")
+    .split(/[,\s;]+/)
+    .map((x) => x.trim())
+    .filter(Boolean)
+    .slice(0, 10);
+}
+
+/** Zaproszenie innych osób do zadania – wymaga ID zespołu i ról użytkownika (pobierane z Livespace). */
+async function invitedUsers(ids: string[]): Promise<Record<string, unknown> | null> {
+  try {
+    const all = await livespaceCall<{ id: string; structures?: { id: string; roles?: { id: string }[] }[] }[]>("Default/User_getAll");
+    const users: Record<string, { structure_id: string; roles: string[] }> = {};
+    for (const id of ids) {
+      const u = (all ?? []).find((x) => x.id === id);
+      const st = u?.structures?.[0];
+      if (st) users[id] = { structure_id: st.id, roles: (st.roles ?? []).map((r) => r.id) };
+    }
+    return Object.keys(users).length ? { users } : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Pola dodatkowe kontaktu w Livespace (np. „Taryfa”, „Zużycie roczne”): LIVESPACE_FIELDS='{"taryfa":"ID pola",…}'.
+ * ID pól: Livespace → Ustawienia konta → API → Kontakty. Klucze: patrz CrmLead.fields.
+ */
+function datasetFor(fields?: Record<string, string | null | undefined>): Record<string, string> | null {
+  if (!fields) return null;
+  let map: Record<string, string> = {};
+  try {
+    map = JSON.parse(process.env.LIVESPACE_FIELDS || "{}");
+  } catch {
+    return null;
+  }
+  const out: Record<string, string> = {};
+  for (const [k, id] of Object.entries(map)) if (id && fields[k]) out[id] = String(fields[k]).slice(0, 1000);
+  return Object.keys(out).length ? out : null;
+}
+
+/** Usuwa puste pola, żeby nie nadpisywać danych w Livespace pustymi wartościami. */
+function clean<T extends Record<string, unknown>>(o: T): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && !v.length)));
+}
+
+type LsList = { company?: { id: string; nip?: string | null }[]; contact?: { id: string }[] };
+
+/** Firma o podanym NIP (dokładne dopasowanie). */
+async function findCompanyByNip(nip: string): Promise<string | null> {
+  try {
+    const r = await livespaceCall<LsList>("Contact/getAll", { type: "company", nip, condition: "equal", limit: 5 });
+    const hit = (r?.company ?? []).find((c) => (c.nip || "").replace(/\D/g, "") === nip) ?? null;
+    return hit?.id ?? null;
+  } catch (e) {
+    console.error("[livespace] szukanie firmy:", (e as Error).message);
+    return null;
+  }
+}
+
+/** Osoba o podanym e-mailu albo numerze telefonu. */
+async function findContact(email?: string | null, phone?: string | null): Promise<string | null> {
+  const tries: Record<string, string>[] = [];
+  if (email) tries.push({ emails: email });
+  const digits = (phone || "").replace(/\D/g, "").replace(/^48(?=\d{9}$)/, "");
+  if (digits.length >= 9) tries.push({ phones: digits });
+  for (const q of tries) {
+    try {
+      const r = await livespaceCall<LsList>("Contact/getAll", { type: "contact", ...q, condition: "equal", limit: 2 });
+      const id = r?.contact?.[0]?.id;
+      if (id) return id;
+    } catch (e) {
+      console.error("[livespace] szukanie osoby:", (e as Error).message);
+    }
+  }
+  return null;
+}
+
 let typeCache: { id: string | null; at: number } | null = null;
 
 /** Typ zadania: z LIVESPACE_TASK_TYPE_ID albo typ o nazwie „Telefon”/„Rozmowa telefoniczna”/„Call”. */
@@ -88,6 +169,8 @@ async function callTypeId(): Promise<string | null> {
 }
 
 export type CrmLead = {
+  /** wartości do pól dodatkowych Livespace (mapowanie w LIVESPACE_FIELDS): taryfa, zuzycie, taryfa_gaz, zuzycie_gaz, ppe, sprzedawca, koniec_umowy, lata, model_ceny, moc_umowna, osd */
+  fields?: Record<string, string | null | undefined>;
   /** dodatkowe linie notatki (np. dane zamówienia z portalu) */
   details?: string[];
   /** tytuł zadania zamiast domyślnego */
@@ -105,6 +188,8 @@ export type CrmLead = {
   message?: string | null;
   page?: string | null;
   adminUrl?: string | null;
+  /** pliki do dołączenia w Livespace (podpisane, krótkotrwałe linki z portalu) */
+  files?: { name: string; url: string }[];
 };
 
 /**
@@ -113,7 +198,8 @@ export type CrmLead = {
  */
 export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: string; todoId: string | null }> {
   const urgent = lead.kind === "TELEFON";
-  const userId = process.env.LIVESPACE_USER_ID || undefined;
+  const userIds = livespaceUserIds();
+  const userId = userIds[0];
   const words = (lead.name || "").trim().split(/\s+/).filter(Boolean);
   const firstname = words.length ? words[0] : urgent ? "Prośba o telefon" : "Zapytanie ze strony";
   const lastname = words.length > 1 ? words.slice(1).join(" ") : lead.phone || lead.email || "(bez nazwiska)";
@@ -132,48 +218,115 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
     .filter(Boolean)
     .join("\n");
 
-  const contact: Record<string, unknown> = {
+  const phones = lead.phone ? [{ phone_no: lead.phone, type: mobile ? 2 : 1, is_default: true }] : undefined;
+  const emails = lead.email ? [{ email: lead.email, is_default: true }] : undefined;
+  const addresses = lead.address?.city
+    ? [{ street: lead.address.street ?? "", postcode: lead.address.postcode ?? "", city: lead.address.city, country: "Polska" }]
+    : undefined;
+  const dataset = datasetFor(lead.fields) ?? undefined;
+  const groups = process.env.LIVESPACE_GROUP_ID ? [process.env.LIVESPACE_GROUP_ID] : undefined;
+  const nip = (lead.nip || "").replace(/\D/g, "") || null;
+
+  // 1) firma: ta sama firma (NIP) jest aktualizowana zamiast tworzenia duplikatu – dane z portalu nadpisują stare
+  let companyId: string | null = null;
+  if (lead.company && nip) {
+    companyId = await findCompanyByNip(nip);
+    const company = clean({
+      name: lead.company,
+      nip,
+      regon: lead.regon || undefined,
+      addresses,
+      dataset,
+      groups,
+      ...(companyId ? {} : { owner_id: userId, company_source: process.env.LIVESPACE_SOURCE || undefined }),
+    });
+    if (companyId) await livespaceCall("Contact/editCompany", { company: { id: companyId, ...company } });
+    else companyId = (await livespaceCall<{ company?: { id?: string } }>("Contact/addCompany", { company }))?.company?.id ?? null;
+  }
+
+  // 2) osoba: szukamy po e-mailu, potem po telefonie; istniejąca jest aktualizowana
+  const existingContact = await findContact(lead.email, lead.phone);
+  const contact = clean({
     firstname,
     lastname,
     note,
-    ...(lead.phone ? { phones: [{ phone_no: lead.phone, type: mobile ? 2 : 1, is_default: true }] } : {}),
-    ...(lead.email ? { emails: [{ email: lead.email, is_default: true }] } : {}),
-    ...(lead.company ? { company: { name: lead.company, ...(lead.nip ? { nip: lead.nip } : {}), ...(lead.regon ? { regon: lead.regon } : {}) } } : {}),
-    ...(lead.address?.city ? { addresses: [{ street: lead.address.street ?? "", postcode: lead.address.postcode ?? "", city: lead.address.city, country: "Polska" }] } : {}),
-    ...(process.env.LIVESPACE_GROUP_ID ? { groups: [process.env.LIVESPACE_GROUP_ID] } : {}),
-    ...(process.env.LIVESPACE_SOURCE ? { contact_source: process.env.LIVESPACE_SOURCE } : {}),
-    ...(userId ? { owner_id: userId } : {}),
-  };
-  const added = await livespaceCall<{ contact?: { id?: string } }>("Contact/addContact", { contact });
-  const contactId = added?.contact?.id;
-  if (!contactId) throw new LivespaceError("Livespace nie zwrócił ID nowej osoby.");
+    phones,
+    emails,
+    company: lead.company ? clean({ name: lead.company, nip: nip || undefined, regon: lead.regon || undefined }) : undefined,
+    addresses: companyId ? undefined : addresses,
+    groups,
+    dataset: companyId ? undefined : dataset,
+    ...(existingContact ? {} : { owner_id: userId, contact_source: process.env.LIVESPACE_SOURCE || undefined }),
+  });
+  let contactId: string | null = existingContact;
+  if (existingContact) {
+    // nie nadpisujemy imienia i nazwiska zastępczym tekstem, gdy klient go nie podał
+    if (!words.length) {
+      delete contact.firstname;
+      delete contact.lastname;
+    }
+    await livespaceCall("Contact/editContact", { contact: { id: existingContact, ...contact } });
+  } else {
+    contactId = (await livespaceCall<{ contact?: { id?: string } }>("Contact/addContact", { contact }))?.contact?.id ?? null;
+  }
+  if (!contactId) throw new LivespaceError("Livespace nie zwrócił ID osoby.");
+
+  // 3) historia: każde zgłoszenie jako notatka na profilu firmy (albo osoby)
+  try {
+    if (companyId) await livespaceCall("Contact/addCompanyNote", { company: { id: companyId, note, permission: 1 } });
+    else if (existingContact) await livespaceCall("Contact/addContactNote", { contact: { id: contactId, note, permission: 1 } });
+  } catch (e) {
+    console.error("[livespace] notatka:", (e as Error).message);
+  }
+
+  // 4) pliki (faktury) – Livespace pobiera je z podpisanego linku portalu
+  for (const f of lead.files ?? []) {
+    try {
+      if (companyId) await livespaceCall("Contact/editCompany", { company: { id: companyId, file: { url: f.url } } });
+      else await livespaceCall("Contact/editContact", { contact: { id: contactId, file: { url: f.url } } });
+    } catch (e) {
+      console.error(`[livespace] plik ${f.name}:`, (e as Error).message);
+    }
+  }
 
   let todoId: string | null = null;
   const typeId = await callTypeId();
-  const todo = await livespaceCall<{ todo?: { id?: string } }>("Todo/addTodo", {
-    todo: {
-      title: lead.taskTitle ?? (urgent ? `PILNE: oddzwoń w 60 s – ${lead.phone}` : `${lead.kindLabel}: ${lead.name || lead.phone || lead.email}`),
-      date: lsDate(),
-      description: note,
-      priority: urgent ? 1 : 0,
-      is_completed: false,
-      ...(userId ? { user_id: userId } : {}),
-      ...(typeId ? { type_id: typeId } : {}),
-      objects: [{ type: "contact", id: contactId }],
-    },
-  });
-  todoId = todo?.todo?.id ?? null;
+  const todoBase = {
+    title: lead.taskTitle ?? (urgent ? `PILNE: oddzwoń w 60 s – ${lead.phone}` : `${lead.kindLabel}: ${lead.name || lead.phone || lead.email}`),
+    date: lsDate(),
+    description: note,
+    priority: urgent ? 1 : 0,
+    is_completed: false,
+    ...(typeId ? { type_id: typeId } : {}),
+    objects: [{ type: "contact", id: contactId }, ...(companyId ? [{ type: "company", id: companyId }] : [])],
+  };
+  // zadanie przypisane do pierwszej osoby; pozostałe osoby zaproszone do tego samego zadania
+  const others = userIds.slice(1);
+  const invited = others.length ? await invitedUsers(others) : null;
+  try {
+    const todo = await livespaceCall<{ todo?: { id?: string } }>("Todo/addTodo", {
+      todo: { ...todoBase, ...(userId ? { user_id: userId } : {}), ...(invited ? { invited } : {}) },
+    });
+    todoId = todo?.todo?.id ?? null;
+  } catch (e) {
+    if (!invited) throw e;
+    // gdyby Livespace nie przyjął zaproszeń – osobne zadanie dla każdej osoby
+    console.error("[livespace] zaproszenie do zadania:", (e as Error).message);
+    for (const [i, uid] of userIds.entries()) {
+      const t = await livespaceCall<{ todo?: { id?: string } }>("Todo/addTodo", { todo: { ...todoBase, user_id: uid } });
+      if (i === 0) todoId = t?.todo?.id ?? null;
+    }
+  }
 
-  if (urgent && userId) {
-    try {
-      await livespaceCall("Crm/notification_send", {
-        user_id: userId,
-        text: `PILNE: klient prosi o telefon w ciągu 60 sekund – ${lead.phone}`,
-        type: "external",
-        url: "/",
-      });
-    } catch (e) {
-      console.error("[livespace] powiadomienie:", (e as Error).message);
+  // powiadomienia w Livespace: „Zamów telefon” i nowe zamówienia z portalu
+  if (urgent || lead.kind === "WNIOSEK") {
+    const text = urgent ? `PILNE: klient prosi o telefon w ciągu 60 sekund – ${lead.phone}` : `Nowe zamówienie z portalu: ${lead.company ?? lead.name ?? ""}`.trim();
+    for (const uid of userIds) {
+      try {
+        await livespaceCall("Crm/notification_send", { user_id: uid, text, type: "external", url: "/" });
+      } catch (e) {
+        console.error("[livespace] powiadomienie:", (e as Error).message);
+      }
     }
   }
   return { contactId, todoId };

@@ -33,5 +33,5 @@ function safeEqual(a: string, b: string): boolean {
 
 export const config = {
   // wszystko poza plikami statycznymi Next.js; zadanie przypomnień ma własny klucz
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/cron).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|api/cron|api/crm-plik).*)"],
 };

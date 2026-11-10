@@ -12,6 +12,7 @@ import { LEAD_TYPES } from "@/lib/constants";
 import { SITE } from "@/lib/site";
 import { getSiteSettings } from "@/lib/cms";
 import { syncLeadToCrm as syncToCrm } from "@/lib/crm-sync";
+import { signedFileUrl } from "@/lib/file-links";
 
 export async function subscribeNewsletter(_prev: FormState, fd: FormData): Promise<FormState> {
   const email = str(fd.get("email"), 200).toLowerCase();
@@ -110,6 +111,7 @@ export async function submitLead(_prev: FormState, fd: FormData): Promise<FormSt
     message: values.message || null,
     page: values.pagePath || null,
     adminUrl: `${SITE.url}/admin/zapytania/${lead.id}/`,
+    files: documentId ? [signedFileUrl(documentId)].filter((u): u is string => !!u).map((url) => ({ name: (file as File).name, url })) : [],
   });
   await sendMail({
     to: values.email,

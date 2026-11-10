@@ -63,37 +63,75 @@ export async function syncApplicationToCrm(appId: string): Promise<void> {
   if (!livespaceConfigured()) return;
   const app = await db.application.findUniqueOrThrow({
     where: { id: appId },
-    include: { company: true, user: true, points: { include: { point: true } } },
+    include: { company: true, user: true, points: { include: { point: true } }, documents: true },
   });
+  const { signedFileUrl } = await import("./file-links");
+  const c = app.company;
   const media = MEDIA[app.media as keyof typeof MEDIA] ?? app.media;
   const models = (app.priceModels ?? app.priceModel)
     .split(",")
     .filter(Boolean)
     .map((m) => PRICE_MODELS[m as keyof typeof PRICE_MODELS]?.label ?? m)
     .join(", ");
-  const num = (n: number | null | undefined) => (n == null ? "–" : `${String(n).replace(".", ",")} MWh`);
+  const num = (n: number | null | undefined, unit = "MWh") => (n == null ? "–" : `${String(n).replace(".", ",")} ${unit}`);
+  const day = (d: Date | null | undefined) => (d ? d.toISOString().slice(0, 10) : null);
+  const addr = (a: (string | null | undefined)[]) => a.filter(Boolean).join(", ");
+  const invoices = app.documents.filter((d) => d.kind === "FAKTURA");
   const details = [
-    `Zamówienie z portalu: ${app.number} (${media})`,
+    `ZAMÓWIENIE Z PORTALU ${app.number} (${media}) – ${day(app.createdAt)}`,
     `Lata dostaw: ${app.years.replace(/,/g, ", ")}`,
     `Model ceny: ${models}`,
     app.tariff && `Prąd – taryfa ${app.tariff}, zużycie roczne ${num(app.annualUsageMWh)}`,
     app.tariffGas && `Gaz – taryfa ${app.tariffGas}, zużycie roczne ${num(app.annualUsageGasMWh)}`,
+    "",
+    "FIRMA",
+    `${c.name}, NIP ${c.nip}${c.regon ? `, REGON ${c.regon}` : ""}${c.legalForm ? `, ${c.legalForm}` : ""}`,
+    `Siedziba: ${addr([c.hqStreet, c.hqPostalCode, c.hqCity]) || "–"}`,
+    !c.corrSameAsHq && `Adres korespondencyjny: ${addr([c.corrStreet, c.corrPostalCode, c.corrCity])}`,
+    `Osoba kontaktowa: ${[c.contactName, c.contactPhone, c.contactEmail ?? app.user.email].filter(Boolean).join(", ")}`,
+    "",
+    `PUNKTY POBORU (${app.points.length})`,
     ...app.points.map(({ point: p }) =>
       [
-        `• ${p.medium === "GAZ" ? "PPG" : "PPE"} ${p.ppeNumber ?? "–"}`,
-        p.name && `(${p.name})`,
+        `• ${p.medium === "GAZ" ? "Gaz – PPG" : "Prąd – PPE"} ${p.ppeNumber ?? "–"}`,
+        p.name && `„${p.name}”`,
+        p.meterNumber && `licznik ${p.meterNumber}`,
         p.tariff && `taryfa ${p.tariff}`,
         p.annualUsageMWh != null && `zużycie ${num(p.annualUsageMWh)}`,
-        p.currentSeller && `sprzedawca ${p.currentSeller}`,
-        p.contractEndDate && `umowa do ${p.contractEndDate.toISOString().slice(0, 10)}`,
-        [p.street, p.postalCode, p.city].filter(Boolean).join(", "),
+        p.contractedPowerKw != null && `moc umowna ${num(p.contractedPowerKw, "kW")}`,
+        p.currentSeller && `sprzedawca: ${p.currentSeller}`,
+        p.operator && `OSD: ${p.operator}`,
+        p.contractEndDate && `umowa do ${day(p.contractEndDate)}`,
+        p.noticeDays != null && `wypowiedzenie ${p.noticeDays} dni`,
+        addr([p.street, p.postalCode, p.city]) && `adres: ${addr([p.street, p.postalCode, p.city])}`,
       ]
         .filter(Boolean)
         .join(", "),
     ),
-    app.wantsCall && "Klient prosi o rozmowę z doradcą.",
+    "",
+    invoices.length ? `Faktury (${invoices.length}, dołączone w plikach): ${invoices.map((d) => d.fileName).join("; ")}` : "Faktury: brak",
+    app.wantsCall ? "Klient prosi o rozmowę z doradcą." : null,
     app.clientComment && `Komentarz klienta: ${app.clientComment}`,
-  ].filter(Boolean) as string[];
+    `Zgody: informacje handlowe e-mail – ${app.user.marketingConsent ? "tak" : "nie"}, SMS – ${app.user.smsConsent ? "tak" : "nie"}, newsletter – ${app.user.newsletterConsent ? "tak" : "nie"}`,
+    app.source && `Źródło: ${app.source}`,
+  ].filter((x) => x !== false && x !== null && x !== undefined) as string[];
+  const firstPower = app.points.find((x) => x.point.medium === "PRAD")?.point;
+  const fields = {
+    taryfa: app.tariff,
+    zuzycie: app.annualUsageMWh != null ? String(app.annualUsageMWh) : null,
+    taryfa_gaz: app.tariffGas,
+    zuzycie_gaz: app.annualUsageGasMWh != null ? String(app.annualUsageGasMWh) : null,
+    ppe: app.points.map((x) => x.point.ppeNumber).filter(Boolean).join(", "),
+    sprzedawca: firstPower?.currentSeller ?? null,
+    osd: firstPower?.operator ?? null,
+    koniec_umowy: day(firstPower?.contractEndDate),
+    moc_umowna: firstPower?.contractedPowerKw != null ? String(firstPower.contractedPowerKw) : null,
+    lata: app.years.replace(/,/g, ", "),
+    model_ceny: models,
+  };
+  const files = invoices
+    .map((d) => ({ name: d.fileName, url: signedFileUrl(d.id) }))
+    .filter((f): f is { name: string; url: string } => !!f.url);
   try {
     const r = await pushLeadToLivespace({
       kind: "WNIOSEK",
@@ -106,6 +144,8 @@ export async function syncApplicationToCrm(appId: string): Promise<void> {
       phone: app.company.contactPhone,
       address: { street: app.company.hqStreet, postcode: app.company.hqPostalCode, city: app.company.hqCity },
       details,
+      fields,
+      files,
       taskTitle: `Nowy wniosek ${app.number} – ${app.company.name}: przygotuj oferty${app.wantsCall ? " i zadzwoń" : ""}`,
       adminUrl: `${SITE.url}/admin/wnioski/${app.id}/`,
     });
