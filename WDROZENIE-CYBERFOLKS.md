@@ -83,6 +83,10 @@ Zapisz. **Nie klikaj „Run NPM Install”** – zależności są już w paczce.
 
 ## 5. Utworzenie tabel i konta administratora (jednorazowo)
 
+**Najprościej – automatycznie:** po zapisaniu `.env` wystarczy uruchomić (zrestartować) aplikację w panelu. `start.js` sam uruchamia `setup.js` przy pierwszym starcie i po każdej nowej wersji (tworzy/aktualizuje tabele, a gdy w `.env` jest `ADMIN_PASSWORD` – konto administratora). Wynik jest w pliku `setup.log` w katalogu aplikacji. Wyłączenie: `AUTO_SETUP=0`.
+
+Ręcznie (alternatywa):
+
 **Przez SSH:** wejdź do katalogu aplikacji i uruchom skrypt środowiskiem aplikacji. Panel pokazuje gotowe polecenie „Enter to the virtual environment”, a ścieżka może się różnić:
 
 ```bash
