@@ -124,6 +124,8 @@ export async function syncApplicationToCrm(appId: string): Promise<void> {
     zuzycie_gaz: app.annualUsageGasMWh != null ? num(app.annualUsageGasMWh) : null,
     sprzedawca_gaz: [firstGas?.currentSeller, app.annualUsageGasMWh != null ? num(app.annualUsageGasMWh) : null].filter(Boolean).join(" / ") || null,
     koniec_umowy_gaz: day(firstGas?.contractEndDate),
+    wolumen: [app.annualUsageMWh != null && `prąd ${num(app.annualUsageMWh)}`, app.annualUsageGasMWh != null && `gaz ${num(app.annualUsageGasMWh)}`].filter(Boolean).join(", ") || null,
+    osoba_kontaktowa: [c.contactName, c.contactPhone, c.contactEmail ?? app.user.email].filter(Boolean).join(", ") || null,
     ppe: app.points.map((x) => x.point.ppeNumber).filter(Boolean).join(", "),
     sprzedawca: firstPower?.currentSeller ?? null,
     osd: firstPower?.operator ?? null,
@@ -149,7 +151,7 @@ export async function syncApplicationToCrm(appId: string): Promise<void> {
       details,
       fields,
       files,
-      taskTitle: `Nowy wniosek ${app.number} – ${app.company.name}: przygotuj oferty${app.wantsCall ? " i zadzwoń" : ""}`,
+      taskTitle: `Portal – nowe zamówienie ${app.number}: ${app.company.name}${app.wantsCall ? " (prosi o telefon)" : ""}`,
       adminUrl: `${SITE.url}/admin/wnioski/${app.id}/`,
     });
     await db.application.update({ where: { id: appId }, data: { crmId: r.contactId, crmError: null } });

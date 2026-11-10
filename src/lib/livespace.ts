@@ -85,6 +85,12 @@ export function livespaceUserIds(): string[] {
     .slice(0, 10);
 }
 
+/** Kto dostaje powiadomienia: LIVESPACE_NOTIFY_USER_ID (np. Joanna i Basia) – domyślnie osoby z LIVESPACE_USER_ID. */
+export function livespaceNotifyIds(): string[] {
+  const extra = (process.env.LIVESPACE_NOTIFY_USER_ID || "").split(/[,\s;]+/).map((x) => x.trim()).filter(Boolean);
+  return [...new Set([...livespaceUserIds(), ...extra])].slice(0, 10);
+}
+
 /** Zaproszenie innych osób do zadania – wymaga ID zespołu i ról użytkownika (pobierane z Livespace). */
 async function invitedUsers(ids: string[]): Promise<Record<string, unknown> | null> {
   try {
@@ -139,6 +145,9 @@ const FIELD_RULES: { re: RegExp; key: string }[] = [
   { re: /obecny sprzedawca gaz/, key: "sprzedawca_gaz" },
   { re: /obecny sprzedawca/, key: "sprzedawca" },
   { re: /^zuzycie/, key: "zuzycie" },
+  { re: /^wartosc\s*\/\s*wolumen/, key: "wolumen" },
+  { re: /dystrybutor/, key: "osd" },
+  { re: /osoba zbierajaca|do kontaktu/, key: "osoba_kontaktowa" },
 ];
 
 const fieldsCache: Record<string, { v: LsField[]; at: number }> = {};
@@ -319,13 +328,16 @@ async function portalSource(): Promise<string | undefined> {
 
 let typeCache: { id: string | null; at: number } | null = null;
 
-/** Typ zadania: z LIVESPACE_TASK_TYPE_ID albo typ o nazwie „Telefon”/„Rozmowa telefoniczna”/„Call”. */
+/** Typ zadania: LIVESPACE_TASK_TYPE_ID albo typ o nazwie „Portal” (LIVESPACE_TASK_TYPE_NAME), w ostateczności „Telefon”. */
 async function callTypeId(): Promise<string | null> {
   if (process.env.LIVESPACE_TASK_TYPE_ID) return process.env.LIVESPACE_TASK_TYPE_ID;
   if (typeCache && Date.now() - typeCache.at < 6 * 3600e3) return typeCache.id;
   try {
     const types = await livespaceCall<Record<string, string>>("Todo/getTypes");
-    const entry = Object.entries(types ?? {}).find(([, n]) => /telefon|rozmow|zadzwo|call/i.test(n));
+    // typ zadania „Portal” (LIVESPACE_TASK_TYPE_NAME); gdyby go nie było – „Telefon”/„Rozmowa”
+    const wanted = norm(process.env.LIVESPACE_TASK_TYPE_NAME || "Portal");
+    const entry =
+      Object.entries(types ?? {}).find(([, n]) => norm(n) === wanted) ?? Object.entries(types ?? {}).find(([, n]) => /telefon|rozmow|zadzwo|call/i.test(n));
     typeCache = { id: entry?.[0] ?? null, at: Date.now() };
   } catch {
     typeCache = { id: null, at: Date.now() };
@@ -465,7 +477,7 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
   let todoId: string | null = null;
   const typeId = await callTypeId();
   const todoBase = {
-    title: lead.taskTitle ?? (urgent ? `PILNE: oddzwoń w 60 s – ${lead.phone}` : `${lead.kindLabel}: ${lead.name || lead.phone || lead.email}`),
+    title: lead.taskTitle ?? (urgent ? `Portal – PILNE: oddzwoń w 60 s – ${lead.phone}` : `Portal – ${lead.kindLabel}: ${lead.company || lead.name || lead.phone || lead.email}`),
     date: lsDate(),
     description: note,
     priority: urgent ? 1 : 0,
@@ -494,7 +506,8 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
   // powiadomienia w Livespace: „Zamów telefon” i nowe zamówienia z portalu
   if (urgent || lead.kind === "WNIOSEK") {
     const text = urgent ? `PILNE: klient prosi o telefon w ciągu 60 sekund – ${lead.phone}` : `Nowe zamówienie z portalu: ${lead.company ?? lead.name ?? ""}`.trim();
-    for (const uid of userIds) {
+    const notify = livespaceNotifyIds();
+    for (const uid of notify) {
       try {
         await livespaceCall("Crm/notification_send", { user_id: uid, text, type: "external", url: "/" });
       } catch (e) {
