@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/cms";
 import { PageHead } from "@/components/app/ui";
 import { SiteSettingsForm } from "@/components/app/CmsForms";
-import { livespaceCall, livespaceConfigured } from "@/lib/livespace";
+import { livespaceCall, livespaceConfigured, portalStatus } from "@/lib/livespace";
 
 export const metadata = { title: "Dane firmy" };
 
@@ -11,12 +11,14 @@ type LsUser = { id: string; name?: string; email?: string };
 
 async function livespaceTest() {
   try {
-    const [users, types, sources] = await Promise.all([
+    const [users, types, sources, stContact, stCompany] = await Promise.all([
       livespaceCall<LsUser[]>("Default/User_getAll"),
       livespaceCall<Record<string, string>>("Todo/getTypes"),
       livespaceCall<string[]>("Default/getSourceList").catch(() => [] as string[]),
+      portalStatus("contact"),
+      portalStatus("company"),
     ]);
-    return { ok: true as const, users: users ?? [], types: Object.entries(types ?? {}), sources: sources ?? [] };
+    return { ok: true as const, users: users ?? [], types: Object.entries(types ?? {}), sources: sources ?? [], stContact, stCompany };
   } catch (e) {
     return { ok: false as const, error: (e as Error).message };
   }
@@ -74,7 +76,14 @@ LIVESPACE_API_SECRET=…`}
             <div className="alert alert--ok" style={{ marginBottom: 16 }}>
               <p>Połączenie z Livespace działa.</p>
             </div>
-            <h3 style={{ fontSize: 16 }}>Handlowcy – wpisz ID wybranej osoby jako LIVESPACE_USER_ID</h3>
+            <p>
+              Status „{process.env.LIVESPACE_STATUS_VALUE || "Portal"}” w danych klienta:{" "}
+              <strong>osoby – {test.stContact ? "znaleziono pole" : "brak pola"}</strong>,{" "}
+              <strong>firmy – {test.stCompany ? "znaleziono pole" : "brak pola"}</strong>. Portal szuka pola dodatkowego o nazwie „
+              {process.env.LIVESPACE_STATUS_FIELD_NAME || "Status"}” z odpowiedzią „{process.env.LIVESPACE_STATUS_VALUE || "Portal"}” i ustawia je
+              dla nowych klientów.
+            </p>
+            <h3 style={{ fontSize: 16 }}>Handlowcy – wpisz ID osób jako LIVESPACE_USER_ID (kilka po przecinku)</h3>
             <div className="table-wrap">
               <table className="data-table">
                 <thead>

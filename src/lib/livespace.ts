@@ -10,6 +10,7 @@
  *   LIVESPACE_FIELDS={…}           (opcjonalnie: pola dodatkowe kontaktu, np. {"taryfa":"ID","zuzycie":"ID"})
  *   LIVESPACE_TASK_TYPE_ID=…       (opcjonalnie: typ zadania; domyślnie typ o nazwie „Telefon”/„Rozmowa”/„Call”)
  *   LIVESPACE_SOURCE=…             (opcjonalnie: źródło kontaktu, np. „Strona www” – musi istnieć w Livespace)
+ *   LIVESPACE_STATUS_FIELD_NAME / LIVESPACE_STATUS_VALUE (domyślnie „Status” = „Portal” – ustawiane w danych klienta i firmy)
  *   LIVESPACE_GROUP_ID=…           (opcjonalnie: grupa kontaktów, np. „kontaktowy” – ID z Ustawienia konta → API → Kontakty)
  * Dokumentacja API: https://api-docs.livespace.io/
  */
@@ -152,6 +153,51 @@ async function findContact(email?: string | null, phone?: string | null): Promis
   return null;
 }
 
+type LsField = { id: string; name: string; type?: string; answers?: { id: string; name: string }[] };
+const statusCache: Record<string, { v: Record<string, string> | null; at: number }> = {};
+
+/**
+ * Status „Portal” w danych klienta: pole o nazwie „Status” (LIVESPACE_STATUS_FIELD_NAME) z odpowiedzią „Portal”
+ * (LIVESPACE_STATUS_VALUE) – wyszukiwane automatycznie w polach dodatkowych Livespace, osobno dla osób i firm.
+ */
+export async function portalStatus(object: "contact" | "company"): Promise<Record<string, string> | null> {
+  const c = statusCache[object];
+  if (c && Date.now() - c.at < 6 * 3600e3) return c.v;
+  const fieldName = (process.env.LIVESPACE_STATUS_FIELD_NAME || "Status").toLowerCase();
+  const value = (process.env.LIVESPACE_STATUS_VALUE || "Portal").toLowerCase();
+  let v: Record<string, string> | null = null;
+  try {
+    const data = await livespaceCall<Record<string, LsField[]>>("Default/getDatasets", { object });
+    const fields = Object.values(data ?? {}).flat();
+    const field = fields.find((f) => f.name?.trim().toLowerCase() === fieldName) ?? fields.find((f) => f.name?.toLowerCase().includes(fieldName));
+    if (field) {
+      const answer = field.answers?.find((a) => a.name?.trim().toLowerCase() === value);
+      if (answer) v = { [field.id]: answer.id };
+      else if (!field.answers?.length) v = { [field.id]: process.env.LIVESPACE_STATUS_VALUE || "Portal" };
+    }
+  } catch (e) {
+    console.error("[livespace] pola dodatkowe:", (e as Error).message);
+  }
+  statusCache[object] = { v, at: Date.now() };
+  return v;
+}
+
+let sourceCache: { v: string | null; at: number } | null = null;
+/** Źródło pozyskania: LIVESPACE_SOURCE albo „Portal”, jeśli taka pozycja istnieje w Livespace. */
+async function portalSource(): Promise<string | undefined> {
+  if (process.env.LIVESPACE_SOURCE) return process.env.LIVESPACE_SOURCE;
+  if (sourceCache && Date.now() - sourceCache.at < 6 * 3600e3) return sourceCache.v ?? undefined;
+  let v: string | null = null;
+  try {
+    const list = await livespaceCall<string[]>("Default/getSourceList");
+    v = (list ?? []).find((x) => x.trim().toLowerCase() === (process.env.LIVESPACE_STATUS_VALUE || "Portal").toLowerCase()) ?? null;
+  } catch {
+    v = null;
+  }
+  sourceCache = { v, at: Date.now() };
+  return v ?? undefined;
+}
+
 let typeCache: { id: string | null; at: number } | null = null;
 
 /** Typ zadania: z LIVESPACE_TASK_TYPE_ID albo typ o nazwie „Telefon”/„Rozmowa telefoniczna”/„Call”. */
@@ -224,6 +270,8 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
     ? [{ street: lead.address.street ?? "", postcode: lead.address.postcode ?? "", city: lead.address.city, country: "Polska" }]
     : undefined;
   const dataset = datasetFor(lead.fields) ?? undefined;
+  const [statusContact, statusCompany, source] = await Promise.all([portalStatus("contact"), portalStatus("company"), portalSource()]);
+  const companyDataset = dataset || statusCompany ? { ...(dataset ?? {}), ...(statusCompany ?? {}) } : undefined;
   const groups = process.env.LIVESPACE_GROUP_ID ? [process.env.LIVESPACE_GROUP_ID] : undefined;
   const nip = (lead.nip || "").replace(/\D/g, "") || null;
 
@@ -236,9 +284,10 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
       nip,
       regon: lead.regon || undefined,
       addresses,
-      dataset,
+      // status „Portal” tylko dla nowej firmy – istniejącej nie zmieniamy statusu ustawionego przez handlowca
+      dataset: companyId ? dataset : companyDataset,
       groups,
-      ...(companyId ? {} : { owner_id: userId, company_source: process.env.LIVESPACE_SOURCE || undefined }),
+      ...(companyId ? {} : { owner_id: userId, company_source: source }),
     });
     if (companyId) await livespaceCall("Contact/editCompany", { company: { id: companyId, ...company } });
     else companyId = (await livespaceCall<{ company?: { id?: string } }>("Contact/addCompany", { company }))?.company?.id ?? null;
@@ -255,8 +304,11 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
     company: lead.company ? clean({ name: lead.company, nip: nip || undefined, regon: lead.regon || undefined }) : undefined,
     addresses: companyId ? undefined : addresses,
     groups,
-    dataset: companyId ? undefined : dataset,
-    ...(existingContact ? {} : { owner_id: userId, contact_source: process.env.LIVESPACE_SOURCE || undefined }),
+    dataset: (() => {
+      const d = { ...(companyId ? {} : (dataset ?? {})), ...(existingContact ? {} : (statusContact ?? {})) };
+      return Object.keys(d).length ? d : undefined;
+    })(),
+    ...(existingContact ? {} : { owner_id: userId, contact_source: source }),
   });
   let contactId: string | null = existingContact;
   if (existingContact) {
