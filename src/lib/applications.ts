@@ -116,11 +116,14 @@ export async function syncApplicationToCrm(appId: string): Promise<void> {
     app.source && `Źródło: ${app.source}`,
   ].filter((x) => x !== false && x !== null && x !== undefined) as string[];
   const firstPower = app.points.find((x) => x.point.medium === "PRAD")?.point;
+  const firstGas = app.points.find((x) => x.point.medium === "GAZ")?.point;
   const fields = {
     taryfa: app.tariff,
-    zuzycie: app.annualUsageMWh != null ? String(app.annualUsageMWh) : null,
+    zuzycie: app.annualUsageMWh != null ? num(app.annualUsageMWh) : null,
     taryfa_gaz: app.tariffGas,
-    zuzycie_gaz: app.annualUsageGasMWh != null ? String(app.annualUsageGasMWh) : null,
+    zuzycie_gaz: app.annualUsageGasMWh != null ? num(app.annualUsageGasMWh) : null,
+    sprzedawca_gaz: [firstGas?.currentSeller, app.annualUsageGasMWh != null ? num(app.annualUsageGasMWh) : null].filter(Boolean).join(" / ") || null,
+    koniec_umowy_gaz: day(firstGas?.contractEndDate),
     ppe: app.points.map((x) => x.point.ppeNumber).filter(Boolean).join(", "),
     sprzedawca: firstPower?.currentSeller ?? null,
     osd: firstPower?.operator ?? null,

@@ -3,7 +3,7 @@ import { requireAdmin } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/cms";
 import { PageHead } from "@/components/app/ui";
 import { SiteSettingsForm } from "@/components/app/CmsForms";
-import { livespaceCall, livespaceConfigured, portalStatus } from "@/lib/livespace";
+import { livespaceCall, livespaceConfigured, matchedFields, portalStatus } from "@/lib/livespace";
 
 export const metadata = { title: "Dane firmy" };
 
@@ -18,7 +18,8 @@ async function livespaceTest() {
       portalStatus("contact"),
       portalStatus("company"),
     ]);
-    return { ok: true as const, users: users ?? [], types: Object.entries(types ?? {}), sources: sources ?? [], stContact, stCompany };
+    const mapped = await matchedFields("company");
+    return { ok: true as const, users: users ?? [], types: Object.entries(types ?? {}), sources: sources ?? [], stContact, stCompany, mapped };
   } catch (e) {
     return { ok: false as const, error: (e as Error).message };
   }
@@ -82,6 +83,10 @@ LIVESPACE_API_SECRET=…`}
               <strong>firmy – {test.stCompany ? "znaleziono pole" : "brak pola"}</strong>. Portal szuka pola dodatkowego o nazwie „
               {process.env.LIVESPACE_STATUS_FIELD_NAME || "Status"}” z odpowiedzią „{process.env.LIVESPACE_STATUS_VALUE || "Portal"}” i ustawia je
               dla nowych klientów.
+            </p>
+            <p>
+              Pola firmy wypełniane z formularza:{" "}
+              {test.mapped.length ? <strong>{test.mapped.map((m) => m.name).join(" · ")}</strong> : <strong>nie znaleziono pól (dane trafią do notatki)</strong>}
             </p>
             <h3 style={{ fontSize: 16 }}>Handlowcy – wpisz ID osób jako LIVESPACE_USER_ID (kilka po przecinku)</h3>
             <div className="table-wrap">

@@ -118,6 +118,80 @@ function datasetFor(fields?: Record<string, string | null | undefined>): Record<
   return Object.keys(out).length ? out : null;
 }
 
+const norm = (x: string) =>
+  x
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/ł/g, "l")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * Pola dodatkowe Livespace rozpoznawane po nazwie (sekcje „Energia” i „GAZ” w danych firmy).
+ * Kolejność ma znaczenie – pierwsza pasująca reguła wygrywa.
+ */
+const FIELD_RULES: { re: RegExp; key: string }[] = [
+  { re: /^taryfa gaz/, key: "taryfa_gaz" },
+  { re: /^taryfa (energi|prad)/, key: "taryfa" },
+  { re: /data konca umowy gaz/, key: "koniec_umowy_gaz" },
+  { re: /data konca umowy/, key: "koniec_umowy" },
+  { re: /obecny sprzedawca gaz/, key: "sprzedawca_gaz" },
+  { re: /obecny sprzedawca/, key: "sprzedawca" },
+  { re: /^zuzycie/, key: "zuzycie" },
+];
+
+const fieldsCache: Record<string, { v: LsField[]; at: number }> = {};
+export async function datasetFields(object: "contact" | "company"): Promise<LsField[]> {
+  const c = fieldsCache[object];
+  if (c && Date.now() - c.at < 6 * 3600e3) return c.v;
+  let v: LsField[] = [];
+  try {
+    const data = await livespaceCall<Record<string, LsField[]>>("Default/getDatasets", { object });
+    v = Object.values(data ?? {}).flat();
+  } catch (e) {
+    console.error("[livespace] pola dodatkowe:", (e as Error).message);
+  }
+  fieldsCache[object] = { v, at: Date.now() };
+  return v;
+}
+
+/** Które pola Livespace zostaną wypełnione z formularza (do testu połączenia w panelu). */
+export async function matchedFields(object: "contact" | "company"): Promise<{ name: string; key: string }[]> {
+  const fields = await datasetFields(object);
+  const out: { name: string; key: string }[] = [];
+  const used = new Set<string>();
+  for (const f of fields) {
+    const rule = FIELD_RULES.find((r) => r.re.test(norm(f.name || "")));
+    if (rule && !used.has(rule.key)) {
+      used.add(rule.key);
+      out.push({ name: f.name, key: rule.key });
+    }
+  }
+  return out;
+}
+
+/** Wartości pól dodatkowych dopasowanych po nazwie; listy wyboru – tylko gdy wartość pasuje do jednej z odpowiedzi. */
+async function autoDataset(object: "contact" | "company", values?: Record<string, string | null | undefined>): Promise<Record<string, string> | null> {
+  if (!values) return null;
+  const fields = await datasetFields(object);
+  const out: Record<string, string> = {};
+  const used = new Set<string>();
+  for (const f of fields) {
+    const rule = FIELD_RULES.find((r) => r.re.test(norm(f.name || "")));
+    if (!rule || used.has(rule.key)) continue;
+    used.add(rule.key);
+    const val = values[rule.key];
+    if (!val) continue;
+    if (f.answers?.length) {
+      const nv = norm(val);
+      const ans = f.answers.find((a) => norm(a.name) === nv) ?? f.answers.find((a) => nv.startsWith(norm(a.name)) || norm(a.name).startsWith(nv));
+      if (ans) out[f.id] = ans.id;
+    } else out[f.id] = String(val).slice(0, 500);
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 /** Usuwa puste pola, żeby nie nadpisywać danych w Livespace pustymi wartościami. */
 function clean<T extends Record<string, unknown>>(o: T): Record<string, unknown> {
   return Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined && v !== null && v !== "" && !(Array.isArray(v) && !v.length)));
@@ -324,13 +398,14 @@ export async function pushLeadToLivespace(lead: CrmLead): Promise<{ contactId: s
   if (lead.company && nip) {
     companyId = await findCompanyByNip(nip);
     const st = await statusValue("company", companyId);
+    const auto = await autoDataset("company", lead.fields);
     const company = clean({
       name: lead.company,
       nip,
       regon: lead.regon || undefined,
       addresses,
       // „Portal” dopisywany do statusów (nowa firma: sam „Portal”, stała: dotychczasowe statusy + „Portal”)
-      dataset: dataset || st ? { ...(dataset ?? {}), ...(st ?? {}) } : undefined,
+      dataset: dataset || st || auto ? { ...(auto ?? {}), ...(dataset ?? {}), ...(st ?? {}) } : undefined,
       groups,
       ...(companyId ? {} : { owner_id: userId, company_source: source }),
     });
