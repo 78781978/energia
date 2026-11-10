@@ -36,17 +36,17 @@ Dokument dla osób wdrażających i utrzymujących serwis. Część 1 opisuje za
 
 ## 2. Lista kontrolna przed uruchomieniem
 
-**Konta i dostęp**
-- [ ] Menedżer haseł dla zespołu; każda usługa ma inne, losowe hasło.
-- [ ] 2FA włączone w:
-  - [ ] GitHub: Settings → Password and authentication → Two-factor authentication,
-  - [ ] Cloudflare: My Profile → Authentication → Two-Factor Authentication,
-  - [ ] cyber_Folks: panel klienta → ustawienia konta / bezpieczeństwo (logowanie dwuetapowe),
-  - [ ] DirectAdmin: Two-Step Authentication (w menu użytkownika),
-  - [ ] rejestrator domeny (jeśli inny niż cyber_Folks) – blokada transferu domeny włączona,
-  - [ ] skrzynki e-mail zespołu (Google Workspace / Microsoft 365 / webmail).
-- [ ] Kody zapasowe 2FA wszystkich usług zapisane w menedżerze haseł.
-- [ ] Repozytorium GitHub prywatne, dostęp tylko dla potrzebnych osób.
+**Konta i dostęp** (poza aplikacją – potwierdzone)
+- [x] Menedżer haseł dla zespołu; każda usługa ma inne, losowe hasło.
+- [x] 2FA włączone w:
+  - [x] GitHub: Settings → Password and authentication → Two-factor authentication,
+  - [x] Cloudflare: My Profile → Authentication → Two-Factor Authentication,
+  - [x] cyber_Folks: panel klienta → ustawienia konta / bezpieczeństwo (logowanie dwuetapowe),
+  - [x] DirectAdmin: Two-Step Authentication (w menu użytkownika),
+  - [x] rejestrator domeny (jeśli inny niż cyber_Folks) – blokada transferu domeny włączona,
+  - [x] skrzynki e-mail zespołu (Google Workspace / Microsoft 365 / webmail).
+- [x] Kody zapasowe 2FA wszystkich usług zapisane w menedżerze haseł.
+- [x] Repozytorium GitHub prywatne, dostęp tylko dla potrzebnych osób.
 
 **Serwer**
 - [ ] Baza (MariaDB lub PostgreSQL) z osobnym użytkownikiem i długim hasłem (tylko dla tej aplikacji).
@@ -57,10 +57,10 @@ Dokument dla osób wdrażających i utrzymujących serwis. Część 1 opisuje za
 
 **Domena i sieć**
 - [ ] Certyfikat Let's Encrypt (domena i `www`).
-- [ ] Cloudflare: domena dodana, DNS przez Cloudflare (proxy włączone), potem `CF_API_TOKEN="…" node cloudflare.js twoja-domena.pl` (ustawia SSL, HTTPS, WAF, limit żądań, Turnstile); w `.env` `BEHIND_CLOUDFLARE=1`; token usunięty po konfiguracji.
-- [ ] Turnstile: klucze w `.env` (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`).
+- [ ] **Cloudflare – odłożone (opcjonalne).** Dodatkowa warstwa WAF/DDoS; do zrobienia osobno: domena dodana, DNS przez Cloudflare (proxy włączone), potem `CF_API_TOKEN="…" node cloudflare.js twoja-domena.pl` (ustawia SSL, HTTPS, WAF, limit żądań, Turnstile); w `.env` `BEHIND_CLOUDFLARE=1`; token usunięty po konfiguracji. **Uwaga:** `BEHIND_CLOUDFLARE=1` ustawić dopiero, gdy ruch faktycznie idzie przez Cloudflare.
+- [ ] **Turnstile – odłożone (opcjonalne, część Cloudflare).** Klucze w `.env` (`TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`). Bez nich formularze chroni pole-pułapka i limit czasu.
 - [ ] HSTS obejmuje subdomeny – upewnij się, że wszystkie subdomeny działają przez HTTPS.
-- [ ] Poczta: rekordy SPF, DKIM, DMARC (na start `p=quarantine`).
+- [x] Poczta: rekordy SPF, DKIM, DMARC (na start `p=quarantine`).
 
 **Aplikacja**
 - [ ] Każdy administrator ma własne konto i włączone 2FA; kody zapasowe w menedżerze haseł.
