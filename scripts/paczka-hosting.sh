@@ -38,6 +38,14 @@ cp deploy/start.js deploy/setup.js deploy/kopia.sh deploy/cloudflare.js "$OUT/"
 # setup.js potrzebuje bcryptjs poza paczką Next.js
 mkdir -p "$OUT/node_modules" && cp -r node_modules/bcryptjs "$OUT/node_modules/"
 cp dist/prisma/schema.prisma "$OUT/schema.prisma"
+# skrypty dla panelu hostingu („Uruchom skrypt JS” / npm run …) – wersje działające na serwerze, bez narzędzi deweloperskich
+node -e '
+const fs = require("fs"); const f = process.argv[1];
+const p = JSON.parse(fs.readFileSync(f, "utf8"));
+p.scripts = { start: "node start.js", setup: "node setup.js", kopia: "bash kopia.sh --jesli-potrzeba" };
+delete p.devDependencies;
+fs.writeFileSync(f, JSON.stringify(p, null, 2) + "\n");
+' "$OUT/package.json"
 # lokalne pliki nie mogą trafić na serwer
 rm -f "$OUT/.env" "$OUT"/prisma/*.db
 cat > "$OUT/.env.example" <<'ENV'
