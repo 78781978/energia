@@ -81,6 +81,8 @@ DirectAdmin → **Setup Node.js App** / **Node.js Selector** → **Create applic
 
 Zapisz. **Nie klikaj „Run NPM Install”** – zależności są już w paczce.
 
+**Zmienna środowiskowa w panelu (ważne na hostingu z CloudLinux):** w sekcji „Environment variables” dodaj `NODE_OPTIONS` = `--v8-pool-size=2`. CloudLinux liczy wątki do limitu procesów (NPROC, np. 100 w cyber_Run), a Node.js domyślnie tworzy tyle wątków, ile rdzeni ma serwer. `start.js` sam ogranicza pozostałe pule (`UV_THREADPOOL_SIZE=2`, `TOKIO_WORKER_THREADS=2`) – aplikacja używa wtedy ok. 9 wątków zamiast kilkudziesięciu.
+
 ## 5. Utworzenie tabel i konta administratora (jednorazowo)
 
 **Najprościej – automatycznie:** po zapisaniu `.env` wystarczy uruchomić (zrestartować) aplikację w panelu. `start.js` sam uruchamia `setup.js` przy pierwszym starcie i po każdej nowej wersji (tworzy/aktualizuje tabele, a gdy w `.env` jest `ADMIN_PASSWORD` – konto administratora). Wynik jest w pliku `setup.log` w katalogu aplikacji. Wyłączenie: `AUTO_SETUP=0`.
